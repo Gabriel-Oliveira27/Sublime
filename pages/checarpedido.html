@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sublime - Checar Status do Pedido">
+  <title>Checar Pedido - Sublime</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ============================================
+       CSS VARIABLES & THEME
+       ============================================ */
+    :root {
+      --pink: #ff6fb5;
+      --lilac: #c7aefc;
+      --white: #ffffff;
+      --muted: #f6f3f8;
+      --dark-blue: #0b2340;
+      --text: #222;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --success: #4caf50;
+      --error: #f44336;
+      
+      /* Theme-specific */
+      --bg-primary: var(--white);
+      --bg-secondary: var(--muted);
+      --text-primary: var(--text);
+      --text-secondary: #666;
+      --accent: var(--pink);
+      --accent-secondary: var(--lilac);
+      --border: #e0e0e0;
+      --card-bg: var(--white);
+    }
+    
+    body.dark-theme {
+      --bg-primary: var(--dark-blue);
+      --bg-secondary: #0a1d33;
+      --text-primary: #f0f0f0;
+      --text-secondary: #b0b0b0;
+      --accent: var(--lilac);
+      --accent-secondary: var(--pink);
+      --border: #1a3a5c;
+      --card-bg: #132942;
+      --shadow: rgba(0, 0, 0, 0.3);
+    }
+    
+    /* ============================================
+       RESET & BASE STYLES
+       ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      transition: background 0.3s ease, color 0.3s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+    
+    input {
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    
+    *:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    
+    /* ============================================
+       HEADER
+       ============================================ */
+    .header {
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+    
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .logo {
+      font-family: 'Allura', cursive;
+      font-size: 2.5rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: background 0.3s ease, color 0.3s ease;
+      text-decoration: none;
+    }
+    
+    .back-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--accent);
+    }
+    
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
+    main {
+      flex: 1;
+      max-width: 800px;
+      width: 100%;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+    
+    .card {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+    
+    .card h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+    
+    .card p {
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+    }
+    
+    .search-form {
+      margin-bottom: 2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      transition: border-color 0.3s ease;
+    }
+    
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+    
+    .btn-search {
+      width: 100%;
+      padding: 1rem 2rem;
+      background: var(--accent);
+      color: white;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-search:hover {
+      background: var(--accent-secondary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 111, 181, 0.3);
+    }
+    
+    .btn-search:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    /* ============================================
+       RESULTS
+       ============================================ */
+    #result-container {
+      display: none;
+    }
+    
+    #result-container.visible {
+      display: block;
+      animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .result-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+    
+    .result-card h2 {
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+    }
+    
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .result-row:last-child {
+      border-bottom: none;
+    }
+    
+    .result-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .result-value {
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: right;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    
+    .status-separacao {
+      background: rgba(255, 152, 0, 0.2);
+      color: #ff9800;
+    }
+    
+    .status-rota {
+      background: rgba(33, 150, 243, 0.2);
+      color: #2196f3;
+    }
+    
+    .status-entregue {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4caf50;
+    }
+    
+    .items-list {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--bg-primary);
+      border-radius: 8px;
+    }
+    
+    .item {
+      padding: 0.5rem 0;
+      color: var(--text-primary);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--border);
+      border-top: 4px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      background: rgba(244, 67, 54, 0.1);
+      border-left: 4px solid var(--error);
+      padding: 1rem;
+      border-radius: 8px;
+      color: var(--error);
+      font-weight: 600;
+    }
+    
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .card {
+        padding: 1.5rem;
+      }
+      
+      .card h1 {
+        font-size: 1.5rem;
+      }
+      
+      .logo {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <a href="/sublime.html" class="logo">Sublime</a>
+      <a href="/sublime.html" class="back-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Voltar à loja
+      </a>
+    </div>
+  </header>
+  
+  <!-- Main Content -->
+  <main>
+    <div class="card">
+      <h1>🔍 Checar Pedido</h1>
+      <p>Digite o ID do seu pedido para verificar o status e detalhes da entrega.</p>
+      
+      <form class="search-form" id="search-form" onsubmit="searchOrder(event)">
+        <div class="form-group">
+          <label for="order-id">ID do Pedido</label>
+          <input 
+            type="text" 
+            id="order-id" 
+            placeholder="Ex: ORD-1234567890" 
+            required
+            autocomplete="off"
+          >
+        </div>
+        
+        <button type="submit" class="btn-search" id="btn-search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          Buscar Pedido
+        </button>
+      </form>
+      
+      <div id="result-container"></div>
+    </div>
+  </main>
+  
+  <script>
+    /* ============================================
+       CONFIGURATION
+       ============================================ */
+    
+    // PLACEHOLDER: URL da API/Planilha
+    const API_ENDPOINT = 'https://your-api-endpoint.com/check-order';
+    
+    /* ============================================
+       INITIALIZATION
+       ============================================ */
+    
+    function initPage() {
+      // Load saved theme
+      const savedTheme = localStorage.getItem('sublime_theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+      }
+    }
+    
+    /* ============================================
+       SEARCH ORDER
+       ============================================ */
+    
+    async function searchOrder(event) {
+      event.preventDefault();
+      
+      const orderId = document.getElementById('order-id').value.trim();
+      const resultContainer = document.getElementById('result-container');
+      const btnSearch = document.getElementById('btn-search');
+      
+      if (!orderId) {
+        return;
+      }
+      
+      // Show loading
+      resultContainer.classList.add('visible');
+      resultContainer.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Buscando pedido...</p>
+        </div>
+      `;
+      
+      btnSearch.disabled = true;
+      
+      try {
+        // PLACEHOLDER: Fazer requisição POST para a API/Planilha
+        const result = await checkOrderStatus(orderId);
+        
+        if (result.found) {
+          displayOrderDetails(result);
+        } else {
+          displayError('Pedido não encontrado. Verifique o ID e tente novamente.');
+        }
+      } catch (error) {
+        console.error('Error checking order:', error);
+        displayError('Erro ao buscar pedido. Tente novamente mais tarde.');
+      } finally {
+        btnSearch.disabled = false;
+      }
+    }
+    
+    /**
+     * PLACEHOLDER: Função que faz POST para a planilha/API
+     * Substituir por integração real
+     */
+    async function checkOrderStatus(orderId) {
+      // Simular delay de rede
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // MOCK: Simular resposta
+      // Em produção, fazer POST com fetch():
+      /*
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderId })
+      });
+      
+      const data = await response.json();
+      return data;
+      */
+      
+      // Mock response
+      if (orderId.includes('ORD')) {
+        return {
+          found: true,
+          orderId: orderId,
+          customerName: 'João Silva',
+          contact: '(88) 99999-9999',
+          items: [
+            { name: 'Pote Modular 2L', quantity: 2, price: 34.90 },
+            { name: 'Jarra Tropical 1.5L', quantity: 1, price: 28.50 }
+          ],
+          totalPaid: 98.30,
+          deliveryStatus: 'Em rota' // Opções: 'Separação', 'Em rota', 'Entregue'
+        };
+      } else {
+        return {
+          found: false
+        };
+      }
+    }
+    
+    /* ============================================
+       DISPLAY FUNCTIONS
+       ============================================ */
+    
+    function displayOrderDetails(order) {
+      const statusClass = getStatusClass(order.deliveryStatus);
+      const itemsHtml = order.items.map(item => 
+        `<div class="item">${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2)}</div>`
+      ).join('');
+      
+      document.getElementById('result-container').innerHTML = `
+        <div class="result-card">
+          <h2>✓ Pedido Encontrado</h2>
+          
+          <div class="result-row">
+            <span class="result-label">ID do Pedido:</span>
+            <span class="result-value">${order.orderId}</span>
+          </div>
+          
+          <div class="result-row">
+            <span class="result-label">Nome do Cliente:</span>
+            <span class="result-value">${order.customerName}</span>
+          </div>
+          
+          <div class="result-row">
+            <span class="result-label">Contato:</span>
+            <span class="result-value">${order.contact}</span>
+          </div>
+          
+          <div class="result-row">
+            <span class="result-label">Status da Entrega:</span>
+            <span class="result-value">
+              <span class="status-badge ${statusClass}">${order.deliveryStatus}</span>
+            </span>
+          </div>
+          
+          <div class="result-row">
+            <span class="result-label">Itens do Pedido:</span>
+            <span class="result-value">${order.items.length} ${order.items.length === 1 ? 'item' : 'itens'}</span>
+          </div>
+          
+          <div class="items-list">
+            ${itemsHtml}
+          </div>
+          
+          <div class="result-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--border);">
+            <span class="result-label" style="font-size: 1.2rem;">Valor Total Pago:</span>
+            <span class="result-value" style="font-size: 1.3rem; color: var(--accent);">R$ ${order.totalPaid.toFixed(2)}</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    function displayError(message) {
+      document.getElementById('result-container').innerHTML = `
+        <div class="error-message">
+          ✗ ${message}
+        </div>
+      `;
+    }
+    
+    function getStatusClass(status) {
+      const statusMap = {
+        'Separação': 'status-separacao',
+        'Em rota': 'status-rota',
+        'Entregue': 'status-entregue'
+      };
+      return statusMap[status] || 'status-separacao';
+    }
+    
+    /* ============================================
+       START
+       ============================================ */
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initPage);
+    } else {
+      initPage();
+    }
+  </script>
+  
+</body>
+</html>
