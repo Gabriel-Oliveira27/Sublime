@@ -1582,9 +1582,10 @@
       <h2 class="section-title">Métodos de Pagamento</h2>
       <div class="payment-cards">
         <article class="payment-card">
-          <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 50 50" stroke="currentColor" fill="currentColor" aria-hidden="true">
-<path d="M 25 0.0390625 C 22.84 0.0390625 20.799531 0.88015625 19.269531 2.4101562 L 9.6796875 12 L 12.929688 12 C 14.529687 12 16.039922 12.619766 17.169922 13.759766 L 23.939453 20.529297 C 24.519453 21.109297 25.480547 21.109531 26.060547 20.519531 L 32.830078 13.759766 C 33.960078 12.619766 35.470312 12 37.070312 12 L 40.320312 12 L 30.730469 2.4101562 C 29.200469 0.88015625 27.16 0.0390625 25 0.0390625 z M 7.6796875 14 L 2.4101562 19.269531 C -0.74984375 22.429531 -0.74984375 27.570469 2.4101562 30.730469 L 7.6796875 36 L 12.929688 36 C 13.999687 36 14.999766 35.580078 15.759766 34.830078 L 22.529297 28.060547 C 23.889297 26.700547 26.110703 26.700547 27.470703 28.060547 L 34.240234 34.830078 C 35.000234 35.580078 36.000312 36 37.070312 36 L 42.320312 36 L 47.589844 30.730469 C 50.749844 27.570469 50.749844 22.429531 47.589844 19.269531 L 42.320312 14 L 37.070312 14 C 36.000313 14 35.000234 14.419922 34.240234 15.169922 L 27.470703 21.939453 C 26.790703 22.619453 25.9 22.960938 25 22.960938 C 24.1 22.960937 23.209297 22.619453 22.529297 21.939453 L 15.759766 15.169922 C 14.999766 14.419922 13.999688 14 12.929688 14 L 7.6796875 14 z M 25 29.037109 C 24.615 29.038359 24.229453 29.185469 23.939453 29.480469 L 17.169922 36.240234 C 16.039922 37.380234 14.529687 38 12.929688 38 L 9.6796875 38 L 19.269531 47.589844 C 20.799531 49.119844 22.84 49.960938 25 49.960938 C 27.16 49.960938 29.200469 49.119844 30.730469 47.589844 L 40.320312 38 L 37.070312 38 C 35.470313 38 33.960078 37.380234 32.830078 36.240234 L 26.060547 29.470703 C 25.770547 29.180703 25.385 29.035859 25 29.037109 z"></path>
-</svg>
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
           <h3>Pix</h3>
           <p>Pagamento instantâneo e seguro. Receba seu pedido mais rápido!</p>
         </article>
@@ -1764,7 +1765,7 @@
       ORIGIN_CEP: '63504-460',
       ORIGIN_ADDRESS: 'Rua Itacy Rodovalho de Alencar nº 110',
       WHATSAPP_NUMBER: '5588000000000', // PLACEHOLDER: substituir com número real
-      CAROUSEL_AUTOPLAY_INTERVAL: 7000,
+      CAROUSEL_AUTOPLAY_INTERVAL: 5000,
       COMMON_STOCK_THRESHOLD: 5, // Products with stock > 5 are considered "common"
       
       // PLACEHOLDER: Taxas de parcelamento configuráveis
@@ -1812,18 +1813,15 @@
     function loadCarouselImages() {
       return [
         {
-          // Placeholder image 1 (rosa/pink gradient)
-          src: 'data/homesublime.png ',
+          src: 'data:image/svg+xml,%3Csvg width="1400" height="400" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3ClinearGradient id="g1" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23ff6fb5;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23c7aefc;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="1400" height="400" fill="url(%23g1)"/%3E%3C/svg%3E',
           caption: 'Bem-vindo à Sublime! Fique à vontade para navegar e consulte nossas ofertas.'
         },
         {
-
-          src: 'data/entregasublime.png',
+          src: 'data:image/svg+xml,%3Csvg width="1400" height="400" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3ClinearGradient id="g2" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23c7aefc;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23ff6fb5;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="1400" height="400" fill="url(%23g2)"/%3E%3C/svg%3E',
           caption: 'Entrega mais rápida da região! Consulte o frete para sua localidade.'
         },
         {
-
-          src: 'data/versatsublime.png',
+          src: 'data:image/svg+xml,%3Csvg width="1400" height="400" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="1400" height="400" fill="%23ff6fb5"/%3E%3C/svg%3E',
           caption: 'Produtos que te acompanham no dia a dia. Praticidade e estilo para sua casa.'
         }
       ];
@@ -2396,6 +2394,12 @@
     }
     
     function openCart() {
+      // Close menu if open to prevent conflicts
+      const menu = document.getElementById('side-menu');
+      if (menu.classList.contains('open')) {
+        closeMenu();
+      }
+      
       document.getElementById('cart-offcanvas').classList.add('open');
       document.getElementById('menu-overlay').classList.add('visible');
       document.getElementById('cart-toggle').setAttribute('aria-expanded', 'true');
@@ -2428,7 +2432,7 @@
       }));
       
       // Navigate to checkout page
-      window.location.href = 'pages/finalizarcompra.html';
+      window.location.href = 'finalizarpagamento.html';
     }
     
 
@@ -2442,9 +2446,10 @@
             <label class="payment-option" data-payment="pix">
               <input type="radio" name="payment" value="pix" onchange="selectPayment('pix')">
               <div class="payment-option-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 50 50">
-<path d="M 25 0.0390625 C 22.84 0.0390625 20.799531 0.88015625 19.269531 2.4101562 L 9.6796875 12 L 12.929688 12 C 14.529687 12 16.039922 12.619766 17.169922 13.759766 L 23.939453 20.529297 C 24.519453 21.109297 25.480547 21.109531 26.060547 20.519531 L 32.830078 13.759766 C 33.960078 12.619766 35.470312 12 37.070312 12 L 40.320312 12 L 30.730469 2.4101562 C 29.200469 0.88015625 27.16 0.0390625 25 0.0390625 z M 7.6796875 14 L 2.4101562 19.269531 C -0.74984375 22.429531 -0.74984375 27.570469 2.4101562 30.730469 L 7.6796875 36 L 12.929688 36 C 13.999687 36 14.999766 35.580078 15.759766 34.830078 L 22.529297 28.060547 C 23.889297 26.700547 26.110703 26.700547 27.470703 28.060547 L 34.240234 34.830078 C 35.000234 35.580078 36.000312 36 37.070312 36 L 42.320312 36 L 47.589844 30.730469 C 50.749844 27.570469 50.749844 22.429531 47.589844 19.269531 L 42.320312 14 L 37.070312 14 C 36.000313 14 35.000234 14.419922 34.240234 15.169922 L 27.470703 21.939453 C 26.790703 22.619453 25.9 22.960938 25 22.960938 C 24.1 22.960937 23.209297 22.619453 22.529297 21.939453 L 15.759766 15.169922 C 14.999766 14.419922 13.999688 14 12.929688 14 L 7.6796875 14 z M 25 29.037109 C 24.615 29.038359 24.229453 29.185469 23.939453 29.480469 L 17.169922 36.240234 C 16.039922 37.380234 14.529687 38 12.929688 38 L 9.6796875 38 L 19.269531 47.589844 C 20.799531 49.119844 22.84 49.960938 25 49.960938 C 27.16 49.960938 29.200469 49.119844 30.730469 47.589844 L 40.320312 38 L 37.070312 38 C 35.470313 38 33.960078 37.380234 32.830078 36.240234 L 26.060547 29.470703 C 25.770547 29.180703 25.385 29.035859 25 29.037109 z"></path>
-</svg>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                  <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
               </div>
               <div class="payment-option-content">
                 <h4>Pix</h4>
@@ -2743,9 +2748,25 @@
       const overlay = document.getElementById('menu-overlay');
       const toggle = document.getElementById('menu-toggle');
       
+      // Close cart if open to prevent conflicts
+      const cart = document.getElementById('cart-offcanvas');
+      if (cart.classList.contains('open')) {
+        closeCart();
+      }
+      
       const isOpen = menu.classList.toggle('open');
       overlay.classList.toggle('visible');
       toggle.setAttribute('aria-expanded', isOpen);
+    }
+    
+    function closeMenu() {
+      const menu = document.getElementById('side-menu');
+      const overlay = document.getElementById('menu-overlay');
+      const toggle = document.getElementById('menu-toggle');
+      
+      menu.classList.remove('open');
+      overlay.classList.remove('visible');
+      toggle.setAttribute('aria-expanded', 'false');
     }
     
     function handleMenuAction(e) {
@@ -2763,7 +2784,7 @@
           toggleFilters();
           break;
         case 'check-order':
-          window.location.href = 'pages/checarpedido.html';
+          window.location.href = 'checarpedido.html';
           break;
       }
     }
