@@ -235,7 +235,7 @@ function renderProducts() {
       <div class="product-card">
         ${badges ? `<div class="product-badges">${badges}</div>` : ''}
         <img 
-          src="${firstVariation.'Imagens Produtos' || 'Imagens Produtos'}" 
+          src="${firstVariation.imagem || 'Imagens Produtos'}" 
           alt="${group.descricao}" 
           class="product-image"
           onerror="this.src='Imagens Produtos'"
