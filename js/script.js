@@ -235,10 +235,10 @@ function renderProducts() {
       <div class="product-card">
         ${badges ? `<div class="product-badges">${badges}</div>` : ''}
         <img 
-          src="${firstVariation.imagem || 'https://via.placeholder.com/200x200?text=Sem+Imagem'}" 
+          src="${firstVariation.'Imagens Produtos' || 'Imagens Produtos'}" 
           alt="${group.descricao}" 
           class="product-image"
-          onerror="this.src='https://via.placeholder.com/200x200?text=Sem+Imagem'"
+          onerror="this.src='Imagens Produtos'"
         />
         <div class="product-name">${group.descricao}</div>
         <div class="product-details">
