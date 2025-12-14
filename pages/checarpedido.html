@@ -11,586 +11,154 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <style>
-    /* ============================================
-       CSS VARIABLES & THEME
-       ============================================ */
-    :root {
-      --pink: #ff6fb5;
-      --lilac: #c7aefc;
-      --white: #ffffff;
-      --muted: #f6f3f8;
-      --dark-blue: #0b2340;
-      --text: #222;
-      --shadow: rgba(0, 0, 0, 0.1);
-      --success: #4caf50;
-      --error: #f44336;
-      
-      /* Theme-specific */
-      --bg-primary: var(--white);
-      --bg-secondary: var(--muted);
-      --text-primary: var(--text);
-      --text-secondary: #666;
-      --accent: var(--pink);
-      --accent-secondary: var(--lilac);
-      --border: #e0e0e0;
-      --card-bg: var(--white);
-    }
-    
-    body.dark-theme {
-      --bg-primary: var(--dark-blue);
-      --bg-secondary: #0a1d33;
-      --text-primary: #f0f0f0;
-      --text-secondary: #b0b0b0;
-      --accent: var(--lilac);
-      --accent-secondary: var(--pink);
-      --border: #1a3a5c;
-      --card-bg: #132942;
-      --shadow: rgba(0, 0, 0, 0.3);
-    }
-    
-    /* ============================================
-       RESET & BASE STYLES
-       ============================================ */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html {
-      scroll-behavior: smooth;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
-      transition: background 0.3s ease, color 0.3s ease;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    button {
-      font-family: inherit;
-      cursor: pointer;
-      border: none;
-      background: none;
-    }
-    
-    input {
-      font-family: inherit;
-      font-size: 1rem;
-    }
-    
-    *:focus-visible {
-      outline: 3px solid var(--accent);
-      outline-offset: 2px;
-    }
-    
-    /* ============================================
-       HEADER
-       ============================================ */
-    .header {
-      background: var(--bg-primary);
-      border-bottom: 1px solid var(--border);
-      padding: 1.5rem;
-      box-shadow: 0 2px 10px var(--shadow);
-    }
-    
-    .header-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .logo {
-      font-family: 'Allura', cursive;
-      font-size: 2.5rem;
-      color: var(--accent);
-      text-decoration: none;
-    }
-    
-    .back-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--text-secondary);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      transition: background 0.3s ease, color 0.3s ease;
-      text-decoration: none;
-    }
-    
-    .back-btn:hover {
-      background: var(--bg-secondary);
-      color: var(--accent);
-    }
-    
-    /* ============================================
-       MAIN CONTENT
-       ============================================ */
-    main {
-      flex: 1;
-      max-width: 800px;
-      width: 100%;
-      margin: 3rem auto;
-      padding: 0 1.5rem;
-    }
-    
-    .card {
-      background: var(--card-bg);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 2.5rem;
-      box-shadow: 0 4px 20px var(--shadow);
-    }
-    
-    .card h1 {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-      color: var(--text-primary);
-    }
-    
-    .card p {
-      color: var(--text-secondary);
-      margin-bottom: 2rem;
-    }
-    
-    .search-form {
-      margin-bottom: 2rem;
-    }
-    
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-    
-    .form-group label {
-      display: block;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-    
-    .form-group input {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      font-size: 1.1rem;
-      transition: border-color 0.3s ease;
-    }
-    
-    .form-group input:focus {
-      border-color: var(--accent);
-    }
-    
-    .btn-search {
-      width: 100%;
-      padding: 1rem 2rem;
-      background: var(--accent);
-      color: white;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-    
-    .btn-search:hover {
-      background: var(--accent-secondary);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(255, 111, 181, 0.3);
-    }
-    
-    .btn-search:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    /* ============================================
-       RESULTS
-       ============================================ */
-    #result-container {
-      display: none;
-    }
-    
-    #result-container.visible {
-      display: block;
-      animation: fadeIn 0.5s ease;
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .result-card {
-      background: var(--bg-secondary);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-    }
-    
-    .result-card h2 {
-      color: var(--accent);
-      margin-bottom: 1.5rem;
-      font-size: 1.5rem;
-    }
-    
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .result-row:last-child {
-      border-bottom: none;
-    }
-    
-    .result-label {
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-    
-    .result-value {
-      font-weight: 700;
-      color: var(--text-primary);
-      text-align: right;
-    }
-    
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-    
-    .status-separacao {
-      background: rgba(255, 152, 0, 0.2);
-      color: #ff9800;
-    }
-    
-    .status-rota {
-      background: rgba(33, 150, 243, 0.2);
-      color: #2196f3;
-    }
-    
-    .status-entregue {
-      background: rgba(76, 175, 80, 0.2);
-      color: #4caf50;
-    }
-    
-    .items-list {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: var(--bg-primary);
-      border-radius: 8px;
-    }
-    
-    .item {
-      padding: 0.5rem 0;
-      color: var(--text-primary);
-    }
-    
-    .loading {
-      text-align: center;
-      padding: 2rem;
-    }
-    
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid var(--border);
-      border-top: 4px solid var(--accent);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1rem;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .error-message {
-      background: rgba(244, 67, 54, 0.1);
-      border-left: 4px solid var(--error);
-      padding: 1rem;
-      border-radius: 8px;
-      color: var(--error);
-      font-weight: 600;
-    }
-    
-    /* ============================================
-       RESPONSIVE
-       ============================================ */
-    @media (max-width: 768px) {
-      .card {
-        padding: 1.5rem;
-      }
-      
-      .card h1 {
-        font-size: 1.5rem;
-      }
-      
-      .logo {
-        font-size: 2rem;
-      }
-    }
-  </style>
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/checp.css">
 </head>
 <body>
   
-  <!-- Header -->
+  <!-- HEADER -->
   <header class="header">
     <div class="header-content">
       <a href="/index.html" class="logo">Sublime</a>
-      <a href="/index.html" class="back-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-        Voltar à loja
-      </a>
+      <a href="/index.html" class="back-btn">← Voltar</a>
     </div>
   </header>
   
-  <!-- Main Content -->
-  <main>
-    <div class="card">
-      <h1>🔍 Checar Pedido</h1>
-      <p>Digite o ID do seu pedido para verificar o status e detalhes da entrega.</p>
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    
+    <!-- TÍTULO DA PÁGINA -->
+    <div class="page-title">
+      <h1>Rastrear Pedido</h1>
+      <p>Digite o ID do seu pedido para acompanhar o status</p>
+    </div>
+    
+    <!-- FORMULÁRIO DE BUSCA -->
+    <div class="search-form">
+      <h2>Buscar Pedido</h2>
       
-      <form class="search-form" id="search-form" onsubmit="searchOrder(event)">
-        <div class="form-group">
-          <label for="order-id">ID do Pedido</label>
-          <input 
-            type="text" 
-            id="order-id" 
-            placeholder="Ex: ORD-1234567890" 
-            required
-            autocomplete="off"
-          >
+      <div class="form-group">
+        <label for="order-id-input">ID do Pedido</label>
+        <input 
+          type="text" 
+          id="order-id-input" 
+          placeholder="Ex: ORD-20240112-XXXX"
+          autocomplete="off"
+        >
+        <small>O ID do pedido foi enviado para seu email após a confirmação</small>
+      </div>
+      
+      <button class="search-btn" id="search-btn" onclick="searchOrder()">
+        Buscar Pedido
+      </button>
+    </div>
+    
+    <!-- LOADING -->
+    <div id="loading" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>Buscando pedido...</p>
+    </div>
+    
+    <!-- MENSAGEM DE ERRO -->
+    <div id="error-message" class="error-message">
+      <h3>❌ Pedido não encontrado</h3>
+      <p id="error-text">Verifique o ID do pedido e tente novamente</p>
+    </div>
+    
+    <!-- RESULTADO DO PEDIDO -->
+    <div id="order-result" class="order-result">
+      
+      <!-- CABEÇALHO DO PEDIDO -->
+      <div class="order-header">
+        <h2>Detalhes do Pedido</h2>
+        <div class="order-id">ID: <span id="order-header-id"></span></div>
+      </div>
+      
+      <!-- STATUS DO PEDIDO -->
+      <div id="order-status" class="order-status pending">
+        <div id="status-icon" class="status-icon"></div>
+        <h3 id="status-title">Status do Pedido</h3>
+        <p id="status-description">Aguardando confirmação</p>
+      </div>
+      
+      <!-- TIMELINE DO PEDIDO -->
+      <div class="order-timeline">
+        <h3>Histórico do Pedido</h3>
+        <div class="timeline" id="order-timeline-items">
+          <!-- Timeline items will be rendered here -->
         </div>
-        
-        <button type="submit" class="btn-search" id="btn-search">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
-          </svg>
-          Buscar Pedido
-        </button>
-      </form>
+      </div>
       
-      <div id="result-container"></div>
+      <!-- DETALHES DO PEDIDO -->
+      <div class="order-details">
+        <h3>Informações do Pedido</h3>
+        <div id="order-details-content">
+          <!-- Order details will be rendered here -->
+        </div>
+      </div>
+      
+      <!-- ITENS DO PEDIDO -->
+      <div class="order-items">
+        <h3>Itens do Pedido</h3>
+        <div id="order-items-content">
+          <!-- Order items will be rendered here -->
+        </div>
+      </div>
+      
+      <!-- BOTÕES DE AÇÃO -->
+      <div class="action-buttons" style="margin-top: 2rem;">
+        <button class="btn btn-secondary" onclick="window.location.href='index.html'">
+          Voltar às Compras
+        </button>
+        <button class="btn btn-primary" onclick="contactSupport()">
+          Contatar Suporte
+        </button>
+      </div>
     </div>
   </main>
   
-  <script>
-    /* ============================================
-       CONFIGURATION
-       ============================================ */
-    
-    // PLACEHOLDER: URL da API/Planilha
-    const API_ENDPOINT = 'https://your-api-endpoint.com/check-order';
-    
-    /* ============================================
-       INITIALIZATION
-       ============================================ */
-    
-    function initPage() {
-      // Load saved theme
-      const savedTheme = localStorage.getItem('sublime_theme');
-      if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
-      }
-    }
-    
-    /* ============================================
-       SEARCH ORDER
-       ============================================ */
-    
-    async function searchOrder(event) {
-      event.preventDefault();
-      
-      const orderId = document.getElementById('order-id').value.trim();
-      const resultContainer = document.getElementById('result-container');
-      const btnSearch = document.getElementById('btn-search');
-      
-      if (!orderId) {
-        return;
-      }
-      
-      // Show loading
-      resultContainer.classList.add('visible');
-      resultContainer.innerHTML = `
-        <div class="loading">
-          <div class="spinner"></div>
-          <p>Buscando pedido...</p>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Contato</h3>
+        <p>Email: contato@sublime.com</p>
+        <p>Telefone: (88) 00000-0000</p>
+        <div class="social-links">
+          <a href="https://wa.me/5588000000000" target="_blank" class="social-link" aria-label="WhatsApp">
+            <svg width="20" height="20" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+          </a>
+          <a href="https://instagram.com/sublime" target="_blank" class="social-link" aria-label="Instagram">
+            <svg width="20" height="20" fill="currentColor">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+          </a>
         </div>
-      `;
+      </div>
       
-      btnSearch.disabled = true;
+      <div class="footer-section">
+        <h3>Sobre</h3>
+        <p>A Sublime oferece produtos Tupperware de alta qualidade para facilitar seu dia a dia.</p>
+      </div>
       
-      try {
-        // PLACEHOLDER: Fazer requisição POST para a API/Planilha
-        const result = await checkOrderStatus(orderId);
-        
-        if (result.found) {
-          displayOrderDetails(result);
-        } else {
-          displayError('Pedido não encontrado. Verifique o ID e tente novamente.');
-        }
-      } catch (error) {
-        console.error('Error checking order:', error);
-        displayError('Erro ao buscar pedido. Tente novamente mais tarde.');
-      } finally {
-        btnSearch.disabled = false;
-      }
-    }
+      <div class="footer-section">
+        <h3>Links Úteis</h3>
+        <a href="/index.html">Voltar às Compras</a>
+        <a href="#" onclick="contactSupport(); return false;">Suporte</a>
+      </div>
+    </div>
     
-    /**
-     * PLACEHOLDER: Função que faz POST para a planilha/API
-     * Substituir por integração real
-     */
-    async function checkOrderStatus(orderId) {
-      // Simular delay de rede
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // MOCK: Simular resposta
-      // Em produção, fazer POST com fetch():
-      /*
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderId })
-      });
-      
-      const data = await response.json();
-      return data;
-      */
-      
-      // Mock response
-      if (orderId.includes('ORD')) {
-        return {
-          found: true,
-          orderId: orderId,
-          customerName: 'João Silva',
-          contact: '(88) 99999-9999',
-          items: [
-            { name: 'Pote Modular 2L', quantity: 2, price: 34.90 },
-            { name: 'Jarra Tropical 1.5L', quantity: 1, price: 28.50 }
-          ],
-          totalPaid: 98.30,
-          deliveryStatus: 'Em rota' // Opções: 'Separação', 'Em rota', 'Entregue'
-        };
-      } else {
-        return {
-          found: false
-        };
-      }
-    }
-    
-    /* ============================================
-       DISPLAY FUNCTIONS
-       ============================================ */
-    
-    function displayOrderDetails(order) {
-      const statusClass = getStatusClass(order.deliveryStatus);
-      const itemsHtml = order.items.map(item => 
-        `<div class="item">${item.quantity}x ${item.name} - R$ ${(item.price * item.quantity).toFixed(2)}</div>`
-      ).join('');
-      
-      document.getElementById('result-container').innerHTML = `
-        <div class="result-card">
-          <h2>✓ Pedido Encontrado</h2>
-          
-          <div class="result-row">
-            <span class="result-label">ID do Pedido:</span>
-            <span class="result-value">${order.orderId}</span>
-          </div>
-          
-          <div class="result-row">
-            <span class="result-label">Nome do Cliente:</span>
-            <span class="result-value">${order.customerName}</span>
-          </div>
-          
-          <div class="result-row">
-            <span class="result-label">Contato:</span>
-            <span class="result-value">${order.contact}</span>
-          </div>
-          
-          <div class="result-row">
-            <span class="result-label">Status da Entrega:</span>
-            <span class="result-value">
-              <span class="status-badge ${statusClass}">${order.deliveryStatus}</span>
-            </span>
-          </div>
-          
-          <div class="result-row">
-            <span class="result-label">Itens do Pedido:</span>
-            <span class="result-value">${order.items.length} ${order.items.length === 1 ? 'item' : 'itens'}</span>
-          </div>
-          
-          <div class="items-list">
-            ${itemsHtml}
-          </div>
-          
-          <div class="result-row" style="margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--border);">
-            <span class="result-label" style="font-size: 1.2rem;">Valor Total Pago:</span>
-            <span class="result-value" style="font-size: 1.3rem; color: var(--accent);">R$ ${order.totalPaid.toFixed(2)}</span>
-          </div>
-        </div>
-      `;
-    }
-    
-    function displayError(message) {
-      document.getElementById('result-container').innerHTML = `
-        <div class="error-message">
-          ✗ ${message}
-        </div>
-      `;
-    }
-    
-    function getStatusClass(status) {
-      const statusMap = {
-        'Separação': 'status-separacao',
-        'Em rota': 'status-rota',
-        'Entregue': 'status-entregue'
-      };
-      return statusMap[status] || 'status-separacao';
-    }
-    
-    /* ============================================
-       START
-       ============================================ */
-    
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initPage);
-    } else {
-      initPage();
-    }
-  </script>
+    <div class="footer-bottom">
+      <p>Todos os direitos reservados © Gabriel Oliveira - 2024</p>
+    </div>
+  </footer>
   
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+  
+  <!-- JavaScript -->
+  <script src="/js/check.js"></script>
 </body>
 </html>
