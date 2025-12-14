@@ -8,7 +8,7 @@
 const API_CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbyLj62_6PDu1JAnqkVj9v7lwfyUJ7h_IyaT5eoyUyL4iHT9usGdgH2U9v3SQmDkhvByxA/exec',
   WORKER_URL: 'https://sublime.mcpemaster620.workers.dev/',
-  WHATSAPP_NUMBER: '5588000000000'
+  WHATSAPP_NUMBER: '5588988568911'
 };
 
 /* ============================================
@@ -31,16 +31,19 @@ const carouselData = [
   {
     title: 'Bem-vindo à Sublime',
     description: 'Produtos Tupperware de qualidade para seu dia a dia',
+    image: '/imagenscarrossel/homesublime.png', 
     background: 'linear-gradient(135deg, #ff6fb5 0%, #c7aefc 100%)'
   },
   {
     title: 'Ofertas Especiais',
     description: 'Confira nossos produtos com desconto',
+    image: '/imagenscarrossel/entregasublime.png', // Ajustado para pasta /Imagens/
     background: 'linear-gradient(135deg, #c7aefc 0%, #ff6fb5 100%)'
   },
   {
     title: 'Entrega Rápida',
     description: 'Receba seus produtos com segurança',
+    image: '/imagenscarrossel/versatsublime.png', // Ajustado para pasta /Imagens/
     background: 'linear-gradient(135deg, #ff6fb5 20%, #0b2340 100%)'
   }
 ];
@@ -57,12 +60,15 @@ function initCarousel() {
     const slideEl = document.createElement('div');
     slideEl.className = 'carousel-slide';
     slideEl.style.background = slide.background;
-    slideEl.innerHTML = `
-      <div class="carousel-content">
-        <h2>${slide.title}</h2>
-        <p>${slide.description}</p>
-      </div>
-    `;
+    
+    // Se houver imagem, usar como background
+    if (slide.image) {
+      slideEl.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${slide.image}')`;
+      slideEl.style.backgroundSize = 'cover';
+      slideEl.style.backgroundPosition = 'center';
+    }
+    
+    
     wrapper.appendChild(slideEl);
     
     // Criar dot
@@ -214,6 +220,9 @@ function renderProducts() {
     const hasMultipleVariations = group.variations.length > 1;
     const firstVariation = group.variations[0];
     
+    // Caminho correto da imagem: /imagensprodutos/{nome_da_imagem}
+    const imagePath = firstVariation.imagem ? `/imagensprodutos/${firstVariation.imagem}` : '';
+    
     // Determinar o preço a mostrar
     let priceDisplay;
     if (hasMultipleVariations && group.minPrice !== group.maxPrice) {
@@ -235,10 +244,10 @@ function renderProducts() {
       <div class="product-card">
         ${badges ? `<div class="product-badges">${badges}</div>` : ''}
         <img 
-          src="${firstVariation.imagem || 'Imagens Produtos'}" 
+          src="${imagePath}" 
           alt="${group.descricao}" 
           class="product-image"
-          onerror="this.src='Imagens Produtos'"
+          onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22 viewBox=%220 0 200 200%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22200%22 height=%22200%22/%3E%3Cpath fill=%22%23999%22 d=%22M100 50c-27.6 0-50 22.4-50 50s22.4 50 50 50 50-22.4 50-50-22.4-50-50-50zm0 85c-19.3 0-35-15.7-35-35s15.7-35 35-35 35 15.7 35 35-15.7 35-35 35z%22/%3E%3Ccircle fill=%22%23999%22 cx=%22100%22 cy=%22100%22 r=%2215%22/%3E%3C/svg%3E';"
         />
         <div class="product-name">${group.descricao}</div>
         <div class="product-details">
@@ -267,30 +276,35 @@ function openVariationsModal(group) {
   
   modalTitle.textContent = group.descricao;
   
-  const variationsHTML = group.variations.map(variation => `
-    <div class="variation-card">
-      <img 
-        src="${variation.imagem || 'https://via.placeholder.com/150x150?text=Sem+Imagem'}" 
-        alt="${variation.cor}" 
-        class="variation-image"
-        onerror="this.src='https://via.placeholder.com/150x150?text=Sem+Imagem'"
-      />
-      ${variation.cor ? `
-        <div class="variation-color">
-          <div class="color-dot" style="background: ${variation.cor.toLowerCase()};"></div>
-          <span>${variation.cor}</span>
+  const variationsHTML = group.variations.map(variation => {
+    // Caminho correto da imagem: /imagensprodutos/{nome_da_imagem}
+    const imagePath = variation.imagem ? `/imagensprodutos/${variation.imagem}` : '';
+    
+    return `
+      <div class="variation-card">
+        <img 
+          src="${imagePath}" 
+          alt="${variation.cor || variation.descricao}" 
+          class="variation-image"
+          onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22 viewBox=%220 0 150 150%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22150%22 height=%22150%22/%3E%3Cpath fill=%22%23999%22 d=%22M75 37c-20.7 0-37.5 16.8-37.5 37.5S54.3 112 75 112s37.5-16.8 37.5-37.5S95.7 37 75 37zm0 63.8c-14.5 0-26.3-11.8-26.3-26.3S60.5 48.2 75 48.2s26.3 11.8 26.3 26.3S89.5 100.8 75 100.8z%22/%3E%3Ccircle fill=%22%23999%22 cx=%2275%22 cy=%2275%22 r=%2211%22/%3E%3C/svg%3E';"
+        />
+        ${variation.cor ? `
+          <div class="variation-color">
+            <div class="color-dot" style="background: ${variation.cor.toLowerCase()};"></div>
+            <span>${variation.cor}</span>
+          </div>
+        ` : ''}
+        <div class="variation-info">
+          ${variation.filtros ? `<div>🏷️ ${variation.filtros}</div>` : ''}
+          <div>📦 Estoque: ${variation.qtd}</div>
         </div>
-      ` : ''}
-      <div class="variation-info">
-        ${variation.filtros ? `<div>🏷️ ${variation.filtros}</div>` : ''}
-        <div>📦 Estoque: ${variation.qtd}</div>
+        <div class="variation-price">R$ ${parseFloat(variation.valor).toFixed(2)}</div>
+        <button class="product-btn btn-primary" onclick='addToCart(${JSON.stringify(variation).replace(/'/g, "&apos;")}); closeVariationsModal();'>
+          Adicionar ao Carrinho
+        </button>
       </div>
-      <div class="variation-price">R$ ${parseFloat(variation.valor).toFixed(2)}</div>
-      <button class="product-btn btn-primary" onclick='addToCart(${JSON.stringify(variation).replace(/'/g, "&apos;")}); closeVariationsModal();'>
-        Adicionar ao Carrinho
-      </button>
-    </div>
-  `).join('');
+    `;
+  }).join('');
   
   modalBody.innerHTML = `<div class="variations-grid">${variationsHTML}</div>`;
   modal.classList.add('active');
