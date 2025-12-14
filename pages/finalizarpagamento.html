@@ -11,2788 +11,470 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Allura&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
-  <style>
-    /* ============================================
-       CSS VARIABLES & THEME
-       ============================================ */
-    :root {
-      --pink: #ff6fb5;
-      --lilac: #c7aefc;
-      --white: #ffffff;
-      --muted: #f6f3f8;
-      --dark-blue: #0b2340;
-      --text: #222;
-      --shadow: rgba(0, 0, 0, 0.1);
-      --overlay: rgba(0, 0, 0, 0.5);
-      --success: #4caf50;
-      --warning: #ff9800;
-      --error: #f44336;
-      
-      --bg-primary: var(--white);
-      --bg-secondary: var(--muted);
-      --text-primary: var(--text);
-      --text-secondary: #666;
-      --accent: var(--pink);
-      --accent-secondary: var(--lilac);
-      --border: #e0e0e0;
-      --card-bg: var(--white);
-    }
-    
-    body.dark-theme {
-      --bg-primary: var(--dark-blue);
-      --bg-secondary: #0a1d33;
-      --text-primary: #f0f0f0;
-      --text-secondary: #b0b0b0;
-      --accent: var(--lilac);
-      --accent-secondary: var(--pink);
-      --border: #1a3a5c;
-      --card-bg: #132942;
-      --shadow: rgba(0, 0, 0, 0.3);
-    }
-    
-    /* ============================================
-       RESET & BASE STYLES
-       ============================================ */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html {
-      scroll-behavior: smooth;
-    }
-    
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-    
-    button {
-      font-family: inherit;
-      cursor: pointer;
-      border: none;
-      background: none;
-    }
-    
-    input, select {
-      font-family: inherit;
-      font-size: 1rem;
-    }
-    
-    *:focus-visible {
-      outline: 3px solid var(--accent);
-      outline-offset: 2px;
-    }
-    
-    /* ============================================
-       TOAST NOTIFICATIONS
-       ============================================ */
-    .toast-container {
-      position: fixed;
-      top: 80px;
-      right: 20px;
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-    }
-    
-    .toast {
-      background: var(--card-bg);
-      color: var(--text-primary);
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px var(--shadow);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 300px;
-      max-width: 400px;
-      pointer-events: all;
-      animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
-      border-left: 4px solid var(--accent);
-    }
-    
-    .toast.error {
-      border-left-color: var(--error);
-    }
-    
-    .toast.success {
-      border-left-color: var(--success);
-    }
-    
-    .toast.warning {
-      border-left-color: var(--warning);
-    }
-    
-    .toast-icon {
-      font-size: 1.5rem;
-      flex-shrink: 0;
-    }
-    
-    .toast-content {
-      flex: 1;
-    }
-    
-    .toast-title {
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-      font-size: 0.95rem;
-    }
-    
-    .toast-message {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-    
-    @keyframes slideInRight {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-    
-    @keyframes fadeOut {
-      to {
-        opacity: 0;
-        transform: translateX(400px);
-      }
-    }
-    
-    /* ============================================
-       MODAL / POPUP
-       ============================================ */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: var(--overlay);
-      z-index: 9999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    .modal-overlay.active {
-      display: flex;
-    }
-    
-    .modal {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      animation: scaleIn 0.3s ease;
-    }
-    
-    .modal h3 {
-      color: var(--text-primary);
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
-    }
-    
-    .modal p {
-      color: var(--text-secondary);
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
-    }
-    
-    .modal-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: flex-end;
-    }
-    
-    .modal-btn {
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-    
-    .modal-btn-cancel {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      border: 2px solid var(--border);
-    }
-    
-    .modal-btn-cancel:hover {
-      background: var(--border);
-    }
-    
-    .modal-btn-confirm {
-      background: var(--accent);
-      color: white;
-    }
-    
-    .modal-btn-confirm:hover {
-      background: var(--accent-secondary);
-    }
-    
-    /* ============================================
-       HEADER
-       ============================================ */
-    .header {
-      background: var(--bg-primary);
-      border-bottom: 1px solid var(--border);
-      padding: 1.5rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 10px var(--shadow);
-    }
-    
-    .header-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .logo {
-      font-family: 'Allura', cursive;
-      font-size: 2.5rem;
-      color: var(--accent);
-      text-decoration: none;
-    }
-    
-    .back-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--text-secondary);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-    
-    .back-btn:hover {
-      background: var(--bg-secondary);
-      color: var(--accent);
-    }
-    
-    /* ============================================
-       PROGRESS STEPS
-       ============================================ */
-    .progress-container {
-      max-width: 1200px;
-      margin: 2rem auto 0;
-      padding: 0 1.5rem;
-    }
-    
-    .progress-steps {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      position: relative;
-    }
-    
-    .progress-steps::before {
-      content: '';
-      position: absolute;
-      top: 20px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--border);
-      z-index: 0;
-    }
-    
-    .progress-line {
-      position: absolute;
-      top: 20px;
-      left: 0;
-      height: 2px;
-      background: var(--accent);
-      z-index: 1;
-      transition: width 0.3s ease;
-    }
-    
-    .step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      position: relative;
-      z-index: 2;
-      background: var(--bg-primary);
-      padding: 0 0.5rem;
-    }
-    
-    .step-number {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--bg-secondary);
-      border: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      color: var(--text-secondary);
-      transition: all 0.3s ease;
-    }
-    
-    .step.active .step-number {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-    
-    .step.completed .step-number {
-      background: var(--success);
-      color: white;
-      border-color: var(--success);
-    }
-    
-    .step-label {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-      white-space: nowrap;
-    }
-    
-    .step.active .step-label {
-      color: var(--accent);
-      font-weight: 600;
-    }
-    
-    /* ============================================
-       MAIN CONTENT
-       ============================================ */
-    .main-container {
-      max-width: 1200px;
-      margin: 0 auto 2rem;
-      padding: 0 1.5rem 3rem;
-      display: grid;
-      grid-template-columns: 1fr 400px;
-      gap: 2rem;
-    }
-    
-    @media (max-width: 968px) {
-      .main-container {
-        grid-template-columns: 1fr;
-      }
-      
-      .summary-sidebar {
-        order: -1;
-      }
-    }
-    
-    .card {
-      background: var(--card-bg);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 1.5rem;
-    }
-    
-    .card h2 {
-      font-size: 1.8rem;
-      margin-bottom: 1.5rem;
-      color: var(--text-primary);
-    }
-    
-    .card h3 {
-      font-size: 1.3rem;
-      margin-bottom: 1rem;
-      color: var(--text-primary);
-    }
-    
-    /* ============================================
-       DELIVERY OPTIONS
-       ============================================ */
-    .delivery-options {
-      display: grid;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .delivery-option {
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    
-    .delivery-option:hover {
-      border-color: var(--accent);
-      background: var(--bg-secondary);
-    }
-    
-    .delivery-option.selected {
-      border-color: var(--accent);
-      background: var(--bg-secondary);
-      box-shadow: 0 4px 15px rgba(255, 111, 181, 0.2);
-    }
-    
-    .delivery-option input[type="radio"] {
-      display: none;
-    }
-    
-    .delivery-icon {
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-primary);
-      border-radius: 12px;
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-    
-    .delivery-content h4 {
-      font-size: 1.2rem;
-      margin-bottom: 0.25rem;
-      color: var(--text-primary);
-    }
-    
-    .delivery-content p {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-    }
-    
-    /* ============================================
-       FORM ELEMENTS
-       ============================================ */
-    .address-section {
-      display: none;
-      animation: fadeIn 0.5s ease;
-    }
-    
-    .address-section.visible {
-      display: block;
-    }
-    
-    .store-address {
-      background: var(--bg-secondary);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-top: 1.5rem;
-      display: none;
-    }
-    
-    .store-address.visible {
-      display: block;
-      animation: fadeIn 0.5s ease;
-    }
-    
-    .store-address h4 {
-      color: var(--accent);
-      margin-bottom: 0.5rem;
-    }
-    
-    .pickup-schedule {
-      background: rgba(255, 152, 0, 0.1);
-      border: 2px solid var(--warning);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-top: 1rem;
-    }
-    
-    .pickup-schedule h4 {
-      color: var(--warning);
-      margin-bottom: 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .pickup-schedule p {
-      font-size: 0.9rem;
-      line-height: 1.6;
-      margin-bottom: 1rem;
-      color: var(--text-primary);
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    
-    .form-group label {
-      display: block;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-    
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      transition: border-color 0.3s ease;
-    }
-    
-    .form-group input:focus,
-    .form-group select:focus {
-      border-color: var(--accent);
-    }
-    
-    .form-row {
-      display: grid;
-      gap: 1rem;
-      grid-template-columns: 1fr 1fr;
-    }
-    
-    @media (max-width: 768px) {
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    .frete-info {
-      background: rgba(255, 152, 0, 0.1);
-      border-left: 4px solid var(--warning);
-      padding: 1rem;
-      border-radius: 8px;
-      margin-top: 1rem;
-    }
-    
-    .frete-info.success {
-      background: rgba(76, 175, 80, 0.1);
-      border-left-color: var(--success);
-    }
-    
-    .frete-info h4 {
-      color: var(--warning);
-      margin-bottom: 0.5rem;
-    }
-    
-    .frete-info.success h4 {
-      color: var(--success);
-    }
-    
-    /* ============================================
-       COUPON SECTION
-       ============================================ */
-    .coupon-section {
-      background: var(--bg-secondary);
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-top: 1.5rem;
-    }
-    
-    .coupon-section h4 {
-      color: var(--text-primary);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .coupon-input-group {
-      display: flex;
-      gap: 0.75rem;
-    }
-    
-    .coupon-input-group input {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      text-transform: uppercase;
-    }
-    
-    .coupon-input-group button {
-      padding: 0.75rem 1.5rem;
-      background: var(--accent);
-      color: white;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-    
-    .coupon-input-group button:hover {
-      background: var(--accent-secondary);
-    }
-    
-    .coupon-applied {
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      background: rgba(76, 175, 80, 0.1);
-      border: 2px solid var(--success);
-      border-radius: 8px;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .coupon-applied.visible {
-      display: flex;
-    }
-    
-    .coupon-applied-text {
-      color: var(--success);
-      font-weight: 600;
-    }
-    
-    .coupon-remove {
-      color: var(--error);
-      cursor: pointer;
-      font-weight: 600;
-      padding: 0.25rem 0.5rem;
-    }
-    
-    .coupon-remove:hover {
-      text-decoration: underline;
-    }
-    
-    /* ============================================
-       PAYMENT OPTIONS
-       ============================================ */
-    .payment-options {
-      display: grid;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .payment-option {
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    
-    .payment-option:hover {
-      border-color: var(--accent);
-      background: var(--bg-secondary);
-    }
-    
-    .payment-option.selected {
-      border-color: var(--accent);
-      background: var(--bg-secondary);
-      box-shadow: 0 4px 15px rgba(255, 111, 181, 0.2);
-    }
-    
-    .payment-option input[type="radio"] {
-      display: none;
-    }
-    
-    .payment-icon {
-      width: 50px;
-      height: 50px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-primary);
-      border-radius: 12px;
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-    
-    .payment-details h4 {
-      font-size: 1.1rem;
-      margin-bottom: 0.25rem;
-      color: var(--text-primary);
-    }
-    
-    .payment-details p {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-    
-    /* Installments Section */
-    .installments-section {
-      display: none;
-      margin-top: 1rem;
-      padding: 1rem;
-      background: var(--bg-secondary);
-      border-radius: 8px;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    .installments-section.visible {
-      display: block;
-    }
-    
-    .installments-section label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    
-    .installments-section select {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      font-size: 1rem;
-    }
-    
-    .installment-total {
-      margin-top: 0.75rem;
-      padding: 0.75rem;
-      background: rgba(255, 111, 181, 0.1);
-      border-radius: 6px;
-      text-align: center;
-      font-weight: 600;
-      color: var(--accent);
-    }
-    
-    /* ============================================
-       REVIEW SECTION
-       ============================================ */
-    .review-section {
-      background: var(--bg-secondary);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-    
-    .review-section h4 {
-      color: var(--accent);
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-    }
-    
-    .review-item {
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .review-item:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    
-    .review-label {
-      font-weight: 600;
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-      margin-bottom: 0.25rem;
-    }
-    
-    .review-value {
-      color: var(--text-primary);
-      font-size: 1rem;
-    }
-    
-    /* ============================================
-       SUMMARY SIDEBAR
-       ============================================ */
-    .summary-sidebar {
-      position: sticky;
-      top: 100px;
-      height: fit-content;
-    }
-    
-    .summary-card {
-      background: var(--card-bg);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 2rem;
-    }
-    
-    .summary-card h3 {
-      font-size: 1.5rem;
-      margin-bottom: 1.5rem;
-      color: var(--text-primary);
-    }
-    
-    .summary-items {
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 1.5rem;
-      padding-right: 0.5rem;
-    }
-    
-    .summary-item {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .summary-item:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    
-    .summary-item-img {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-      object-fit: cover;
-      background: var(--bg-secondary);
-    }
-    
-    .summary-item-details {
-      flex: 1;
-    }
-    
-    .summary-item-name {
-      font-weight: 600;
-      color: var(--text-primary);
-      font-size: 0.95rem;
-      margin-bottom: 0.25rem;
-    }
-    
-    .summary-item-qty {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-    
-    .summary-item-price {
-      font-weight: 700;
-      color: var(--accent);
-      text-align: right;
-    }
-    
-    .summary-totals {
-      margin-bottom: 1.5rem;
-    }
-    
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.75rem;
-      color: var(--text-primary);
-      font-size: 0.95rem;
-    }
-    
-    .summary-row.discount {
-      color: var(--success);
-    }
-    
-    .summary-row.total {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--accent);
-      padding-top: 1rem;
-      border-top: 2px solid var(--border);
-    }
-    
-    .summary-row.frete {
-      color: var(--warning);
-    }
-    
-    .summary-row.frete.free {
-      color: var(--success);
-    }
-    
-    /* ============================================
-       BUTTONS
-       ============================================ */
-    .btn-group {
-      display: flex;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 1rem 2rem;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 1.05rem;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-    
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: var(--accent-secondary);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(255, 111, 181, 0.3);
-    }
-    
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-    
-    .btn-secondary {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      border: 2px solid var(--border);
-    }
-    
-    .btn-secondary:hover {
-      background: var(--border);
-    }
-    
-    /* ============================================
-       SUCCESS SCREEN
-       ============================================ */
-    .success-screen {
-      display: none;
-      text-align: center;
-      padding: 3rem 1rem;
-    }
-    
-    .success-screen.visible {
-      display: block;
-      animation: fadeIn 0.5s ease;
-    }
-    
-    .success-icon {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 2rem;
-      background: var(--success);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: scaleIn 0.5s ease;
-    }
-    
-    @keyframes scaleIn {
-      from {
-        transform: scale(0);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
-    }
-    
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .order-id-display {
-      display: inline-block;
-      background: var(--bg-secondary);
-      padding: 0.5rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 700;
-      color: var(--accent);
-      margin: 1.5rem 0;
-      font-size: 1.2rem;
-    }
-    
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
-    
-    /* Tablets e telas médias */
-    @media (max-width: 1024px) {
-      .main-container {
-        padding: 0 1rem 2rem;
-      }
-      
-      .card {
-        padding: 1.5rem;
-      }
-      
-      .summary-card {
-        padding: 1.5rem;
-      }
-      
-      .toast {
-        min-width: 280px;
-        max-width: 350px;
-      }
-      
-      .step-label {
-        font-size: 0.75rem;
-      }
-    }
-    
-    /* Mobile landscape e tablets pequenos */
-    @media (max-width: 768px) {
-      .header {
-        padding: 1rem;
-      }
-      
-      .logo {
-        font-size: 2rem;
-      }
-      
-      .back-btn {
-        padding: 0.5rem;
-        font-size: 0.9rem;
-      }
-      
-      .progress-container {
-        padding: 0 1rem;
-      }
-      
-      .step-label {
-        font-size: 0.7rem;
-      }
-      
-      .step-number {
-        width: 35px;
-        height: 35px;
-        font-size: 0.9rem;
-      }
-      
-      .main-container {
-        margin: 0 auto 1rem;
-        padding: 0 1rem 2rem;
-        gap: 1.5rem;
-      }
-      
-      .card {
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-      }
-      
-      .card h2 {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-      }
-      
-      .card h3 {
-        font-size: 1.1rem;
-      }
-      
-      .delivery-option,
-      .payment-option {
-        padding: 1rem;
-        flex-direction: row;
-      }
-      
-      .delivery-icon,
-      .payment-icon {
-        width: 40px;
-        height: 40px;
-      }
-      
-      .delivery-icon svg,
-      .payment-icon svg {
-        width: 24px;
-        height: 24px;
-      }
-      
-      .delivery-content h4,
-      .payment-details h4 {
-        font-size: 1rem;
-      }
-      
-      .delivery-content p,
-      .payment-details p {
-        font-size: 0.85rem;
-      }
-      
-      .form-group input,
-      .form-group select {
-        padding: 0.65rem 0.85rem;
-        font-size: 0.95rem;
-      }
-      
-      .btn-group {
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      
-      .btn {
-        width: 100%;
-        padding: 0.85rem 1.5rem;
-        font-size: 1rem;
-      }
-      
-      .summary-sidebar {
-        position: static;
-      }
-      
-      .summary-card {
-        padding: 1.25rem;
-      }
-      
-      .summary-card h3 {
-        font-size: 1.3rem;
-        margin-bottom: 1rem;
-      }
-      
-      .summary-items {
-        max-height: 250px;
-      }
-      
-      .summary-item {
-        gap: 0.75rem;
-      }
-      
-      .summary-item-img {
-        width: 50px;
-        height: 50px;
-      }
-      
-      .summary-item-name {
-        font-size: 0.9rem;
-      }
-      
-      .summary-item-qty {
-        font-size: 0.8rem;
-      }
-      
-      .summary-item-price {
-        font-size: 0.9rem;
-      }
-      
-      .summary-row {
-        font-size: 0.9rem;
-      }
-      
-      .summary-row.total {
-        font-size: 1.3rem;
-      }
-      
-      .store-address,
-      .frete-info {
-        padding: 1rem;
-      }
-      
-      .success-screen {
-        padding: 2rem 1rem;
-      }
-      
-      .success-icon {
-        width: 80px;
-        height: 80px;
-      }
-      
-      .order-id-display {
-        font-size: 1.1rem;
-        padding: 0.4rem 1.2rem;
-      }
-      
-      .toast-container {
-        right: 10px;
-        left: 10px;
-        top: 70px;
-      }
-      
-      .toast {
-        min-width: auto;
-        width: 100%;
-      }
-      
-      .modal {
-        width: 95%;
-        padding: 1.5rem;
-      }
-      
-      .modal h3 {
-        font-size: 1.3rem;
-      }
-      
-      .modal-buttons {
-        flex-direction: column;
-      }
-      
-      .modal-btn {
-        width: 100%;
-      }
-    }
-    
-    /* Mobile portrait */
-    @media (max-width: 480px) {
-      .header {
-        padding: 0.75rem;
-      }
-      
-      .logo {
-        font-size: 1.75rem;
-      }
-      
-      .back-btn {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.85rem;
-        gap: 0.25rem;
-      }
-      
-      .back-btn svg {
-        width: 16px;
-        height: 16px;
-      }
-      
-      .progress-container {
-        padding: 0 0.75rem;
-      }
-      
-      .step {
-        padding: 0 0.25rem;
-      }
-      
-      .step-number {
-        width: 30px;
-        height: 30px;
-        font-size: 0.85rem;
-      }
-      
-      .step-label {
-        font-size: 0.65rem;
-      }
-      
-      .main-container {
-        margin: 0 auto;
-        padding: 0 0.75rem 1.5rem;
-        gap: 1rem;
-      }
-      
-      .card {
-        padding: 1rem;
-        border-radius: 12px;
-      }
-      
-      .card h2 {
-        font-size: 1.3rem;
-        margin-bottom: 0.85rem;
-      }
-      
-      .card h3 {
-        font-size: 1rem;
-        margin-bottom: 0.75rem;
-      }
-      
-      .delivery-options,
-      .payment-options {
-        gap: 0.75rem;
-      }
-      
-      .delivery-option,
-      .payment-option {
-        padding: 0.85rem;
-        border-radius: 10px;
-      }
-      
-      .delivery-icon,
-      .payment-icon {
-        width: 35px;
-        height: 35px;
-        border-radius: 8px;
-      }
-      
-      .delivery-icon svg,
-      .payment-icon svg {
-        width: 20px;
-        height: 20px;
-      }
-      
-      .delivery-content h4,
-      .payment-details h4 {
-        font-size: 0.95rem;
-      }
-      
-      .delivery-content p,
-      .payment-details p {
-        font-size: 0.8rem;
-      }
-      
-      .form-group {
-        margin-bottom: 0.85rem;
-      }
-      
-      .form-group label {
-        font-size: 0.9rem;
-        margin-bottom: 0.4rem;
-      }
-      
-      .form-group input,
-      .form-group select {
-        padding: 0.6rem 0.75rem;
-        font-size: 0.9rem;
-        border-radius: 6px;
-      }
-      
-      .form-row {
-        gap: 0.75rem;
-      }
-      
-      .btn-group {
-        margin-top: 1.5rem;
-        gap: 0.65rem;
-      }
-      
-      .btn {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.95rem;
-        border-radius: 6px;
-      }
-      
-      .summary-card {
-        padding: 1rem;
-        border-radius: 12px;
-      }
-      
-      .summary-card h3 {
-        font-size: 1.2rem;
-        margin-bottom: 0.85rem;
-      }
-      
-      .summary-items {
-        max-height: 200px;
-        margin-bottom: 1rem;
-      }
-      
-      .summary-item {
-        gap: 0.65rem;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.75rem;
-      }
-      
-      .summary-item-img {
-        width: 45px;
-        height: 45px;
-        border-radius: 6px;
-      }
-      
-      .summary-item-name {
-        font-size: 0.85rem;
-      }
-      
-      .summary-item-qty {
-        font-size: 0.75rem;
-      }
-      
-      .summary-item-price {
-        font-size: 0.85rem;
-      }
-      
-      .summary-totals {
-        margin-bottom: 1rem;
-      }
-      
-      .summary-row {
-        font-size: 0.85rem;
-        margin-bottom: 0.65rem;
-      }
-      
-      .summary-row.total {
-        font-size: 1.2rem;
-        padding-top: 0.75rem;
-      }
-      
-      .store-address,
-      .frete-info,
-      .pickup-schedule,
-      .coupon-section {
-        padding: 0.85rem;
-        border-radius: 10px;
-        margin-top: 0.85rem;
-      }
-      
-      .success-screen {
-        padding: 1.5rem 0.75rem;
-      }
-      
-      .success-screen h2 {
-        font-size: 1.3rem;
-      }
-      
-      .success-screen p {
-        font-size: 0.9rem;
-      }
-      
-      .success-icon {
-        width: 70px;
-        height: 70px;
-        margin-bottom: 1.5rem;
-      }
-      
-      .success-icon svg {
-        width: 40px;
-        height: 40px;
-      }
-      
-      .spinner {
-        width: 40px;
-        height: 40px;
-        border-width: 3px;
-      }
-      
-      .order-id-display {
-        font-size: 1rem;
-        padding: 0.35rem 1rem;
-        margin: 1rem 0;
-      }
-    }
-  </style>
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/finpag.css">
 </head>
 <body>
   
-  <!-- Header -->
+  <!-- HEADER -->
   <header class="header">
     <div class="header-content">
       <a href="/index.html" class="logo">Sublime</a>
-      <button class="back-btn" onclick="attemptGoBack()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-        Voltar
-      </button>
+      <a href="/index.html" class="back-btn">← Voltar</a>
     </div>
   </header>
   
-  <!-- Toast Container -->
-  <div class="toast-container" id="toast-container"></div>
-  
-  <!-- Modal for Confirmation -->
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal">
-      <h3>Cancelar compra?</h3>
-      <p>Deseja realmente voltar? Seus produtos permanecerão no carrinho.</p>
-      <div class="modal-buttons">
-        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Continuar comprando</button>
-        <button class="modal-btn modal-btn-confirm" onclick="confirmGoBack()">Sim, voltar</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Progress Steps -->
-  <div class="progress-container">
-    <div class="progress-steps">
-      <div class="progress-line" id="progress-line" style="width: 0%"></div>
-      
+  <!-- INDICADOR DE ETAPAS -->
+  <section class="checkout-steps">
+    <div class="steps-container">
       <div class="step active" data-step="1">
         <div class="step-number">1</div>
-        <span class="step-label">Entrega</span>
+        <div class="step-label">Dados</div>
       </div>
-      
       <div class="step" data-step="2">
         <div class="step-number">2</div>
-        <span class="step-label">Pagamento</span>
+        <div class="step-label">Recebimento</div>
       </div>
-      
       <div class="step" data-step="3">
         <div class="step-number">3</div>
-        <span class="step-label">Revisão</span>
+        <div class="step-label">Revisão</div>
       </div>
-      
       <div class="step" data-step="4">
         <div class="step-number">4</div>
-        <span class="step-label">Confirmação</span>
+        <div class="step-label">Pagamento</div>
       </div>
     </div>
-  </div>
+  </section>
   
-  <!-- Main Content -->
-  <div class="main-container">
-    
-    <!-- Left Column - Forms -->
-    <div id="checkout-content">
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <div class="checkout-grid">
       
-      <!-- STEP 1: Delivery Selection -->
-      <div class="card" id="step-1-delivery" style="display: block;">
-        <h2>🚚 Escolha o tipo de recebimento</h2>
+      <!-- FORMULÁRIO DAS ETAPAS -->
+      <div class="checkout-form">
         
-        <div class="delivery-options">
-          <label class="delivery-option" data-type="entrega">
-            <input type="radio" name="delivery" value="entrega" onchange="selectDeliveryType('entrega')">
-            <div class="delivery-icon">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="3" width="15" height="13"></rect>
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                <circle cx="18.5" cy="18.5" r="2.5"></circle>
-              </svg>
-            </div>
-            <div class="delivery-content">
-              <h4>Entrega em domicílio</h4>
-              <p>Receba seus produtos no conforto da sua casa</p>
-            </div>
-          </label>
+        <!-- ============================================
+             ETAPA 1: DADOS PESSOAIS
+             ============================================ -->
+        <div class="step-content active" id="step-1">
+          <h2>Seus Dados</h2>
           
-          <label class="delivery-option" data-type="retirada">
-            <input type="radio" name="delivery" value="retirada" onchange="selectDeliveryType('retirada')">
-            <div class="delivery-icon">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-              </svg>
-            </div>
-            <div class="delivery-content">
-              <h4>Retirar na loja</h4>
-              <p>Retire pessoalmente - Frete grátis!</p>
-            </div>
-          </label>
+          <div class="form-group">
+            <label for="customer-name">Nome Completo *</label>
+            <input type="text" id="customer-name" required>
+            <span class="error-message" id="error-name"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="customer-phone">Telefone *</label>
+            <input type="tel" id="customer-phone" placeholder="(00) 00000-0000" required>
+            <span class="error-message" id="error-phone"></span>
+          </div>
+          
+          <div class="form-group">
+            <label for="customer-cpf">CPF *</label>
+            <input type="text" id="customer-cpf" placeholder="000.000.000-00" required maxlength="14">
+            <span class="error-message" id="error-cpf"></span>
+          </div>
+          
+          <div class="action-buttons">
+            <button class="btn btn-primary" onclick="nextStep()">Avançar</button>
+          </div>
         </div>
         
-        <!-- Address Form -->
-        <div class="address-section" id="address-form">
-          <h3>Endereço de entrega</h3>
+        <!-- ============================================
+             ETAPA 2: RECEBIMENTO
+             ============================================ -->
+        <div class="step-content" id="step-2" style="display: none;">
+          <h2>Como deseja receber?</h2>
           
-          <form id="delivery-form">
-            <div class="form-group">
-              <label for="cep">CEP</label>
-              <input type="text" id="cep" placeholder="00000-000" maxlength="9" oninput="handleCepInput(event)">
+          <div class="delivery-options">
+            <div class="delivery-option" data-type="retirada" onclick="selectDeliveryType('retirada')">
+              <div class="delivery-option-header">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <h3>Retirada</h3>
+              </div>
+              <p>Buscar no local</p>
             </div>
             
-            <div class="form-group">
-              <label for="street">Rua</label>
-              <input type="text" id="street" placeholder="Nome da rua">
+            <div class="delivery-option" data-type="entrega" onclick="selectDeliveryType('entrega')">
+              <div class="delivery-option-header">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+                </svg>
+                <h3>Entrega</h3>
+              </div>
+              <p>Receber em casa</p>
             </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="number">Número</label>
-                <input type="text" id="number" placeholder="Nº">
-              </div>
-              <div class="form-group">
-                <label for="complement">Complemento</label>
-                <input type="text" id="complement" placeholder="Apto, bloco...">
-              </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="neighborhood">Bairro</label>
-              <input type="text" id="neighborhood" placeholder="Bairro">
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="city">Cidade</label>
-                <input type="text" id="city" placeholder="Cidade">
-              </div>
-              <div class="form-group">
-                <label for="state">Estado</label>
-                <input type="text" id="state" placeholder="UF" maxlength="2">
-              </div>
-            </div>
-            
-            <div class="form-row">
-              <div class="form-group">
-                <label for="customer-name">Nome completo</label>
-                <input type="text" id="customer-name" placeholder="Seu nome completo" required>
-              </div>
-              <div class="form-group">
-                <label for="customer-phone">Telefone / WhatsApp</label>
-                <input type="tel" id="customer-phone" placeholder="(00) 0.0000-0000" maxlength="17" oninput="formatPhone(this)" required>
-              </div>
-            </div>
-          </form>
+          </div>
           
-          <div class="frete-info" id="frete-info" style="display: none;"></div>
-        </div>
-        
-        <!-- Store Address & Pickup Schedule -->
-        <div class="store-address" id="store-address">
-          <h4>📍 Endereço da loja</h4>
-          <p><strong>Rua Itacy Rodovalho de Alencar, 110</strong></p>
-          <p>CEP: 63504-460</p>
-          
-          <!-- Pickup Schedule -->
-          <div class="pickup-schedule">
-            <h4>⏰ Agendar retirada</h4>
-            <p><strong>Atenção:</strong> O cliente é responsável por comparecer no horário agendado. Caso não compareça, poderá ser necessário remarcar conforme disponibilidade. Se comparecer fora do horário e não houver atendente disponível, a responsabilidade é do cliente.</p>
+          <!-- CAMPOS DE RETIRADA -->
+          <div id="pickup-fields" style="display: none;">
+            <div class="info-box">
+              <strong>📍 Endereço de Retirada:</strong><br>
+              Rua Itacy Rodovalho de Alencar, 110 - Veneza<br>
+              Próximo à Academia DM Fit - CEP: 63504-460
+            </div>
+            
+            <div class="form-group">
+              <label for="pickup-who">Quem vai retirar? *</label>
+              <input type="text" id="pickup-who" placeholder="Nome da pessoa">
+              <span class="error-message" id="error-pickup-who"></span>
+            </div>
             
             <div class="form-row">
               <div class="form-group">
-                <label for="pickup-date">Data da retirada *</label>
-                <input type="date" id="pickup-date" required>
+                <label for="pickup-date">Data da Retirada *</label>
+                <input type="date" id="pickup-date">
+                <span class="error-message" id="error-pickup-date"></span>
               </div>
+              
               <div class="form-group">
-                <label for="pickup-time">Horário da retirada *</label>
-                <select id="pickup-time" required>
+                <label for="pickup-time">Horário *</label>
+                <select id="pickup-time">
                   <option value="">Selecione</option>
+                  <option value="08:00">08:00</option>
+                  <option value="08:30">08:30</option>
+                  <option value="09:00">09:00</option>
+                  <option value="09:30">09:30</option>
+                  <option value="10:00">10:00</option>
+                  <option value="10:30">10:30</option>
+                  <option value="11:00">11:00</option>
+                  <option value="11:30">11:30</option>
+                  <option value="12:00">12:00</option>
+                  <option value="12:30">12:30</option>
+                  <option value="13:00">13:00</option>
+                  <option value="13:30">13:30</option>
+                  <option value="14:00">14:00</option>
+                  <option value="14:30">14:30</option>
+                  <option value="15:00">15:00</option>
+                  <option value="15:30">15:30</option>
+                  <option value="16:00">16:00</option>
+                  <option value="16:30">16:30</option>
+                  <option value="17:00">17:00</option>
+                  <option value="17:30">17:30</option>
+                  <option value="18:00">18:00</option>
+                  <option value="18:30">18:30</option>
+                  <option value="19:00">19:00</option>
+                </select>
+                <span class="error-message" id="error-pickup-time"></span>
+              </div>
+            </div>
+            
+            <div class="warning-box">
+              ⚠️ <strong>Atenção:</strong> Se não houver atendente disponível no horário marcado, a responsabilidade é do cliente. Para remarcar, entre em contato com a vendedora.
+            </div>
+          </div>
+          
+          <!-- CAMPOS DE ENTREGA -->
+          <div id="delivery-fields" style="display: none;">
+            <div class="info-box">
+              <strong>📦 Origem:</strong> Rua Itacy Rodovalho de Alencar, 110 - CEP: 63504-460
+            </div>
+            
+            <div class="form-group">
+              <label for="delivery-cep">CEP *</label>
+              <input type="text" id="delivery-cep" placeholder="00000-000" maxlength="9">
+              <button type="button" class="btn-inline" onclick="searchCEP()">Buscar CEP</button>
+              <span class="error-message" id="error-cep"></span>
+            </div>
+            
+            <div class="form-group">
+              <label for="delivery-street">Rua *</label>
+              <input type="text" id="delivery-street" required>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="delivery-number">Número *</label>
+                <input type="text" id="delivery-number" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="delivery-complement">Complemento</label>
+                <input type="text" id="delivery-complement">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="delivery-neighborhood">Bairro *</label>
+              <input type="text" id="delivery-neighborhood" required>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="delivery-city">Cidade *</label>
+                <input type="text" id="delivery-city" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="delivery-state">Estado *</label>
+                <select id="delivery-state" required>
+                  <option value="">Selecione</option>
+                  <option value="CE">CE</option>
+                  <option value="AC">AC</option>
+                  <option value="AL">AL</option>
+                  <option value="AP">AP</option>
+                  <option value="AM">AM</option>
+                  <option value="BA">BA</option>
+                  <option value="DF">DF</option>
+                  <option value="ES">ES</option>
+                  <option value="GO">GO</option>
+                  <option value="MA">MA</option>
+                  <option value="MT">MT</option>
+                  <option value="MS">MS</option>
+                  <option value="MG">MG</option>
+                  <option value="PA">PA</option>
+                  <option value="PB">PB</option>
+                  <option value="PR">PR</option>
+                  <option value="PE">PE</option>
+                  <option value="PI">PI</option>
+                  <option value="RJ">RJ</option>
+                  <option value="RN">RN</option>
+                  <option value="RS">RS</option>
+                  <option value="RO">RO</option>
+                  <option value="RR">RR</option>
+                  <option value="SC">SC</option>
+                  <option value="SP">SP</option>
+                  <option value="SE">SE</option>
+                  <option value="TO">TO</option>
                 </select>
               </div>
             </div>
+            
+            <button type="button" class="btn btn-secondary" onclick="calculateShipping()">Calcular Frete</button>
+            
+            <div id="shipping-result" style="display: none;">
+              <div class="success-box">
+                <strong>✓ Frete Calculado</strong><br>
+                Distância: <span id="distance-km">-</span> km<br>
+                Valor: <strong>R$ <span id="shipping-value">0.00</span></strong>
+                <p id="shipping-note" class="small-text"></p>
+              </div>
+            </div>
           </div>
           
-          <p style="margin-top: 1rem;">Por favor, preencha seus dados para contato:</p>
+          <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="prevStep()">Voltar</button>
+            <button class="btn btn-primary" onclick="nextStep()">Avançar</button>
+          </div>
+        </div>
+        
+        <!-- ============================================
+             ETAPA 3: REVISÃO
+             ============================================ -->
+        <div class="step-content" id="step-3" style="display: none;">
+          <h2>Conferir Venda</h2>
           
-          <form id="pickup-form" style="margin-top: 1rem;">
-            <div class="form-group">
-              <label for="pickup-name">Nome completo</label>
-              <input type="text" id="pickup-name" placeholder="Seu nome completo" required>
+          <div class="review-section">
+            <h3>📦 Produtos</h3>
+            <div id="review-items"></div>
+          </div>
+          
+          <div class="review-section">
+            <h3>🚚 Recebimento</h3>
+            <div id="review-delivery"></div>
+          </div>
+          
+          <div class="review-section">
+            <h3>💰 Valores</h3>
+            <div class="review-totals">
+              <div class="review-row">
+                <span>Subtotal:</span>
+                <span id="review-subtotal">R$ 0,00</span>
+              </div>
+              <div class="review-row">
+                <span>Frete:</span>
+                <span id="review-shipping">R$ 0,00</span>
+              </div>
+              <div class="review-row">
+                <span>Desconto (cupom):</span>
+                <span id="review-discount">R$ 0,00</span>
+              </div>
+              <div class="review-row total">
+                <span><strong>Total:</strong></span>
+                <span id="review-total"><strong>R$ 0,00</strong></span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="prevStep()">Voltar</button>
+            <button class="btn btn-primary" onclick="nextStep()">Avançar para Pagamento</button>
+          </div>
+        </div>
+        
+        <!-- ============================================
+             ETAPA 4: PAGAMENTO
+             ============================================ -->
+        <div class="step-content" id="step-4" style="display: none;">
+          <h2>Forma de Pagamento</h2>
+          
+          <div class="payment-methods">
+            <div class="payment-method" data-method="PIX" onclick="selectPaymentMethod('PIX')">
+              <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+              </svg>
+              <h3>PIX</h3>
+              <p>Aprovação imediata</p>
             </div>
             
-            <div class="form-group">
-              <label for="pickup-phone">Telefone / WhatsApp</label>
-              <input type="tel" id="pickup-phone" placeholder="(00) 0.0000-0000" maxlength="17" oninput="formatPhone(this)" required>
-            </div>
-          </form>
-        </div>
-        
-        <!-- Coupon Section -->
-        <div class="coupon-section">
-          <h4>🎟️ Cupom de desconto</h4>
-          <div class="coupon-input-group">
-            <input type="text" id="coupon-input" placeholder="Digite seu cupom" maxlength="10">
-            <button onclick="applyCoupon()">Aplicar</button>
-          </div>
-          <div class="coupon-applied" id="coupon-applied">
-            <span class="coupon-applied-text" id="coupon-text"></span>
-            <span class="coupon-remove" onclick="removeCoupon()">✕ Remover</span>
-          </div>
-        </div>
-        
-        <div class="btn-group">
-          <button class="btn btn-secondary" onclick="attemptGoBack()">Cancelar</button>
-          <button class="btn btn-primary" onclick="proceedToPayment()" id="btn-proceed">
-            Continuar
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      <!-- STEP 2: Payment Selection -->
-      <div class="card" id="step-2-payment" style="display: none;">
-        <h2>💳 Forma de pagamento</h2>
-        
-        <div class="payment-options">
-          <label class="payment-option" data-payment="pix">
-            <input type="radio" name="payment" value="pix" onchange="selectPayment('pix')">
-            <div class="payment-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="30" height="30" viewBox="0 0 50 50" fill="currentColor">
-                <path d="M 25 0.0390625 C 22.84 0.0390625 20.799531 0.88015625 19.269531 2.4101562 L 9.6796875 12 L 12.929688 12 C 14.529687 12 16.039922 12.619766 17.169922 13.759766 L 23.939453 20.529297 C 24.519453 21.109297 25.480547 21.109531 26.060547 20.519531 L 32.830078 13.759766 C 33.960078 12.619766 35.470312 12 37.070312 12 L 40.320312 12 L 30.730469 2.4101562 C 29.200469 0.88015625 27.16 0.0390625 25 0.0390625 z M 7.6796875 14 L 2.4101562 19.269531 C -0.74984375 22.429531 -0.74984375 27.570469 2.4101562 30.730469 L 7.6796875 36 L 12.929688 36 C 13.999687 36 14.999766 35.580078 15.759766 34.830078 L 22.529297 28.060547 C 23.889297 26.700547 26.110703 26.700547 27.470703 28.060547 L 34.240234 34.830078 C 35.000234 35.580078 36.000312 36 37.070312 36 L 42.320312 36 L 47.589844 30.730469 C 50.749844 27.570469 50.749844 22.429531 47.589844 19.269531 L 42.320312 14 L 37.070312 14 C 36.000313 14 35.000234 14.419922 34.240234 15.169922 L 27.470703 21.939453 C 26.790703 22.619453 25.9 22.960938 25 22.960938 C 24.1 22.960937 23.209297 22.619453 22.529297 21.939453 L 15.759766 15.169922 C 14.999766 14.419922 13.999688 14 12.929688 14 L 7.6796875 14 z M 25 29.037109 C 24.615 29.038359 24.229453 29.185469 23.939453 29.480469 L 17.169922 36.240234 C 16.039922 37.380234 14.529687 38 12.929688 38 L 9.6796875 38 L 19.269531 47.589844 C 20.799531 49.119844 22.84 49.960938 25 49.960938 C 27.16 49.960938 29.200469 49.119844 30.730469 47.589844 L 40.320312 38 L 37.070312 38 C 35.470313 38 33.960078 37.380234 32.830078 36.240234 L 26.060547 29.470703 C 25.770547 29.180703 25.385 29.035859 25 29.037109 z"></path>
+            <div class="payment-method" data-method="Dinheiro" onclick="selectPaymentMethod('Dinheiro')">
+              <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.31 8.14c1.77.45 2.34.94 2.34 1.67 0 .84-.79 1.43-2.1 1.43-1.38 0-1.9-.66-1.94-1.64h-1.71c.05 1.34.87 2.57 2.49 2.97V16h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V2h-2.34v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21z"/>
               </svg>
+              <h3>Dinheiro</h3>
+              <p>Pagar na entrega/retirada</p>
             </div>
-            <div class="payment-details">
-              <h4>Pix</h4>
-              <p>Pagamento instantâneo e sem taxas</p>
-            </div>
-          </label>
-          
-          <label class="payment-option" data-payment="dinheiro">
-            <input type="radio" name="payment" value="dinheiro" onchange="selectPayment('dinheiro')">
-            <div class="payment-icon">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="1" x2="12" y2="23"></line>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            
+            <div class="payment-method" data-method="Credito" onclick="selectPaymentMethod('Credito')">
+              <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
               </svg>
-            </div>
-            <div class="payment-details">
-              <h4>Dinheiro</h4>
-              <p>Pagamento em espécie na entrega/retirada</p>
-            </div>
-          </label>
-          
-          <label class="payment-option" data-payment="credito">
-            <input type="radio" name="payment" value="credito" onchange="selectPayment('credito')">
-            <div class="payment-icon">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-            </div>
-            <div class="payment-details">
-              <h4>Cartão de Crédito</h4>
+              <h3>Cartão de Crédito</h3>
               <p>Parcelamento disponível</p>
             </div>
-          </label>
+          </div>
+          
+          <!-- DETALHES DO MÉTODO SELECIONADO -->
+          <div id="payment-details">
+            <!-- PIX -->
+            <div class="payment-info" id="info-PIX" style="display: none;">
+              <p>✅ Após confirmar o pedido, você receberá as instruções para pagamento via PIX.</p>
+            </div>
+            
+            <!-- Dinheiro -->
+            <div class="payment-info" id="info-Dinheiro" style="display: none;">
+              <p>💵 O pagamento será realizado na entrega ou retirada do produto.</p>
+              <div class="form-group">
+                <label for="change-for">Troco para quanto? (opcional)</label>
+                <input type="text" id="change-for" placeholder="R$ 100,00">
+              </div>
+            </div>
+            
+            <!-- Crédito -->
+            <div class="payment-info" id="info-Credito" style="display: none;">
+              <div class="form-group">
+                <label for="installments">Número de Parcelas *</label>
+                <select id="installments" onchange="updateInstallments()">
+                  <option value="1">1x sem juros - R$ 0,00</option>
+                  <option value="2">2x - R$ 0,00</option>
+                  <option value="3">3x - R$ 0,00</option>
+                  <option value="4">4x - R$ 0,00</option>
+                  <option value="5">5x - R$ 0,00</option>
+                  <option value="6">6x - R$ 0,00</option>
+                  <option value="7">7x - R$ 0,00</option>
+                  <option value="8">8x - R$ 0,00</option>
+                  <option value="9">9x - R$ 0,00</option>
+                  <option value="10">10x - R$ 0,00</option>
+                  <option value="11">11x - R$ 0,00</option>
+                  <option value="12">12x - R$ 0,00</option>
+                </select>
+              </div>
+              
+              <div class="installment-summary">
+                <div class="summary-row">
+                  <span>Valor sem juros:</span>
+                  <span id="value-no-fee">R$ 0,00</span>
+                </div>
+                <div class="summary-row highlight">
+                  <span><strong>Valor total com juros:</strong></span>
+                  <span id="value-with-fee"><strong>R$ 0,00</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="prevStep()">Voltar</button>
+            <button class="btn btn-primary btn-finish" onclick="finishOrder()">
+              <span id="btn-finish-text">Reservar Pedido</span>
+              <span id="btn-finish-spinner" class="btn-spinner" style="display: none;"></span>
+            </button>
+          </div>
         </div>
         
-        <!-- Installments Section -->
-        <div class="installments-section" id="installments-section">
-          <label for="installments">Escolha o número de parcelas:</label>
-          <select id="installments" onchange="calculateInstallments()">
-            <option value="1">1x à vista - 3,79%</option>
-            <option value="2">2x - 5,89%</option>
-            <option value="3">3x - 6,89%</option>
-            <option value="4">4x - 7,89%</option>
-            <option value="5">5x - 8,80%</option>
-            <option value="6">6x - 9,97%</option>
-            <option value="7">7x - 12,89%</option>
-            <option value="8">8x - 13,72%</option>
-            <option value="9">9x - 15,05%</option>
-            <option value="10">10x - 15,86%</option>
-            <option value="11">11x - 16,74%</option>
-            <option value="12">12x - 17,46%</option>
-          </select>
-          <div class="installment-total" id="installment-total"></div>
-        </div>
-        
-        <div class="btn-group">
-          <button class="btn btn-secondary" onclick="backToDelivery()">Voltar</button>
-          <button class="btn btn-primary" onclick="proceedToReview()" id="btn-payment-next" disabled>
-            Continuar
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        </div>
       </div>
       
-      <!-- STEP 3: Review Order -->
-      <div class="card" id="step-3-review" style="display: none;">
-        <h2>📋 Revise seu pedido</h2>
+      <!-- RESUMO DO PEDIDO (LATERAL) -->
+      <div class="order-summary">
+        <h2>Resumo do Pedido</h2>
         
-        <div class="review-section">
-          <h4>🛍️ Produtos</h4>
-          <div id="review-products"></div>
+        <div id="summary-items"></div>
+        
+        <!-- CUPOM -->
+        <div class="coupon-section">
+          <div class="coupon-input-group">
+            <input type="text" id="coupon-input" placeholder="Código do cupom" style="text-transform: uppercase;">
+            <button onclick="applyCoupon()">Aplicar</button>
+          </div>
+          <div id="coupon-message" class="coupon-message" style="display: none;"></div>
         </div>
         
-        <div class="review-section">
-          <h4 id="review-delivery-title">🚚 Entrega</h4>
-          <div id="review-delivery"></div>
-        </div>
-        
-        <div class="review-section">
-          <h4>💳 Pagamento</h4>
-          <div id="review-payment"></div>
-        </div>
-        
-        <div class="review-section" id="review-coupon-section" style="display: none;">
-          <h4>🎟️ Cupom aplicado</h4>
-          <div id="review-coupon"></div>
-        </div>
-        
-        <div class="btn-group">
-          <button class="btn btn-secondary" onclick="backToPayment()">Voltar</button>
-          <button class="btn btn-primary" onclick="finalizeOrder()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            Finalizar Pedido
-          </button>
+        <!-- TOTAIS -->
+        <div class="summary-totals">
+          <div class="summary-row">
+            <span>Subtotal:</span>
+            <span id="summary-subtotal">R$ 0,00</span>
+          </div>
+          
+          <div class="summary-row">
+            <span>Frete:</span>
+            <span id="summary-shipping">Calcular</span>
+          </div>
+          
+          <div class="summary-row">
+            <span>Desconto:</span>
+            <span id="summary-discount">R$ 0,00</span>
+          </div>
+          
+          <div class="summary-row total">
+            <span><strong>Total:</strong></span>
+            <span id="summary-total"><strong>R$ 0,00</strong></span>
+          </div>
         </div>
       </div>
-      
-      <!-- STEP 4: Success Screen -->
-      <div class="card success-screen" id="step-4-success">
-        <div class="success-icon" id="success-icon">
-          <div class="spinner"></div>
-        </div>
-        <div id="success-message"></div>
+    </div>
+  </main>
+  
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Contato</h3>
+        <p>Email: contato@sublime.com</p>
+        <p>Telefone: (88) 00000-0000</p>
       </div>
       
+      <div class="footer-section">
+        <h3>Sobre</h3>
+        <p>A Sublime oferece produtos Tupperware de alta qualidade.</p>
+      </div>
+      
+      <div class="footer-section">
+        <h3>Links Úteis</h3>
+        <a href="checharpedido.html">Rastrear Pedido</a>
+        <a href="index.html">Voltar às Compras</a>
+      </div>
     </div>
     
-    <!-- Right Column - Summary -->
-    <aside class="summary-sidebar">
-      <div class="summary-card">
-        <h3>Resumo do Pedido</h3>
-        
-        <div class="summary-items" id="summary-items">
-          <!-- Dynamically rendered -->
-        </div>
-        
-        <div class="summary-totals" id="summary-totals">
-          <!-- Dynamically rendered -->
-        </div>
-      </div>
-    </aside>
-    
+    <div class="footer-bottom">
+      <p>Todos os direitos reservados © Gabriel Oliveira - 2024</p>
+    </div>
+  </footer>
+  
+  <!-- LOADING OVERLAY -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <p id="loading-text">Processando...</p>
   </div>
   
-  <script>
-    /* ============================================
-       CONFIGURATION
-       ============================================ */
-    const CONFIG = {
-      STORE_ADDRESS: {
-        street: 'Rua Itacy Rodovalho de Alencar',
-        number: '110',
-        cep: '63504-460',
-        city: 'Iguatu',
-        state: 'CE',
-        lat: -6.3588, // PLACEHOLDER: coordenadas reais
-        lng: -39.2978
-      },
-      
-      // Taxas de parcelamento do cartão de crédito
-      INSTALLMENT_RATES: {
-        1: 3.79,
-        2: 5.89,
-        3: 6.89,
-        4: 7.89,
-        5: 8.80,
-        6: 9.97,
-        7: 12.89,
-        8: 13.72,
-        9: 15.05,
-        10: 15.86,
-        11: 16.74,
-        12: 17.46
-      },
-      
-      // Cupons de desconto
-      COUPONS: {
-        'TESTE1': { type: 'percent', value: 10, description: '10% de desconto' },
-        'TESTE2': { type: 'percent', value: 15, description: '15% de desconto' },
-        'TESTE3': { type: 'freeShipping', value: 0, description: 'Frete grátis' }
-      },
-      
-      // PLACEHOLDER: URL da API para salvar pedido
-      API_ENDPOINT: 'https://your-api-endpoint.com/save-order'
-    };
-    
-    /* ============================================
-       STATE
-       ============================================ */
-    let checkoutState = {
-      cart: [],
-      deliveryType: null,
-      deliveryData: {},
-      paymentType: null,
-      paymentData: {},
-      coupon: null,
-      subtotal: 0,
-      discount: 0,
-      frete: 0,
-      total: 0,
-      distance: null,
-      currentStep: 1
-    };
-    
-    /* ============================================
-       TOAST NOTIFICATIONS
-       ============================================ */
-    function showToast(title, message, type = 'error') {
-      const container = document.getElementById('toast-container');
-      
-      const icons = {
-        error: '❌',
-        success: '✓',
-        warning: '⚠️'
-      };
-      
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.innerHTML = `
-        <div class="toast-icon">${icons[type]}</div>
-        <div class="toast-content">
-          <div class="toast-title">${title}</div>
-          <div class="toast-message">${message}</div>
-        </div>
-      `;
-      
-      container.appendChild(toast);
-      
-      // Remove após 3 segundos
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
-    }
-    
-    /* ============================================
-       MODAL FUNCTIONS
-       ============================================ */
-    function attemptGoBack() {
-      document.getElementById('modal-overlay').classList.add('active');
-    }
-    
-    function closeModal() {
-      document.getElementById('modal-overlay').classList.remove('active');
-    }
-    
-    function confirmGoBack() {
-      window.location.href = '/index.html';
-    }
-    
-    /* ============================================
-       PHONE FORMATTING
-       ============================================ */
-    function formatPhone(input) {
-      let value = input.value.replace(/\D/g, '');
-      
-      if (value.length <= 11) {
-        // Formato: (XX) X.XXXX-XXXX
-        if (value.length > 10) {
-          value = value.replace(/^(\d{2})(\d{1})(\d{4})(\d{4}).*/, '($1) $2.$3-$4');
-        } else if (value.length > 6) {
-          value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
-        } else if (value.length > 2) {
-          value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
-        } else if (value.length > 0) {
-          value = value.replace(/^(\d*)/, '($1');
-        }
-      } else {
-        value = value.substring(0, 11);
-        value = value.replace(/^(\d{2})(\d{1})(\d{4})(\d{4}).*/, '($1) $2.$3-$4');
-      }
-      
-      input.value = value;
-    }
-    
-    /* ============================================
-       PROGRESS STEPS
-       ============================================ */
-    function updateProgress(step) {
-      checkoutState.currentStep = step;
-      
-      // Update step indicators
-      document.querySelectorAll('.step').forEach((stepEl, index) => {
-        stepEl.classList.remove('active', 'completed');
-        if (index + 1 < step) {
-          stepEl.classList.add('completed');
-        } else if (index + 1 === step) {
-          stepEl.classList.add('active');
-        }
-      });
-      
-      // Update progress line
-      const progressLine = document.getElementById('progress-line');
-      const progressPercent = ((step - 1) / 3) * 100;
-      progressLine.style.width = progressPercent + '%';
-    }
-    
-    /* ============================================
-       INITIALIZATION
-       ============================================ */
-    function initCheckout() {
-      // Load cart data
-      const checkoutData = localStorage.getItem('sublime_checkout_data');
-      
-      if (!checkoutData) {
-        showToast('Carrinho vazio', 'Nenhum produto no carrinho. Você será redirecionado.', 'warning');
-        setTimeout(() => {
-          window.location.href = '/index.html';
-        }, 2000);
-        return;
-      }
-      
-      const data = JSON.parse(checkoutData);
-      checkoutState.cart = data.cart;
-      
-      calculateSubtotal();
-      renderSummary();
-      initPickupSchedule();
-      
-      // Load theme
-      const savedTheme = localStorage.getItem('sublime_theme');
-      if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
-      }
-    }
-    
-    /* ============================================
-       PICKUP SCHEDULE INITIALIZATION
-       ============================================ */
-    function initPickupSchedule() {
-      // Set minimum date (tomorrow)
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const minDate = tomorrow.toISOString().split('T')[0];
-      document.getElementById('pickup-date').setAttribute('min', minDate);
-      
-      // Generate time slots (9:00 - 20:00, 30 min intervals)
-      const timeSelect = document.getElementById('pickup-time');
-      timeSelect.innerHTML = '<option value="">Selecione</option>';
-      
-      for (let hour = 9; hour <= 20; hour++) {
-        for (let min = 0; min < 60; min += 30) {
-          if (hour === 20 && min > 0) break; // Stop at 20:00
-          
-          const timeStart = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-          const nextMin = min + 30;
-          const nextHour = nextMin >= 60 ? hour + 1 : hour;
-          const finalMin = nextMin >= 60 ? 0 : nextMin;
-          const timeEnd = `${nextHour.toString().padStart(2, '0')}:${finalMin.toString().padStart(2, '0')}`;
-          
-          const option = document.createElement('option');
-          option.value = `${timeStart} - ${timeEnd}`;
-          option.textContent = `${timeStart} – ${timeEnd}`;
-          timeSelect.appendChild(option);
-        }
-      }
-    }
-    
-    /* ============================================
-       COUPON FUNCTIONS
-       ============================================ */
-    function applyCoupon() {
-      const couponInput = document.getElementById('coupon-input');
-      const couponCode = couponInput.value.trim().toUpperCase();
-      
-      if (!couponCode) {
-        showToast('Atenção', 'Digite um cupom válido', 'warning');
-        return;
-      }
-      
-      const coupon = CONFIG.COUPONS[couponCode];
-      
-      if (!coupon) {
-        showToast('Cupom inválido', 'Este cupom não existe ou expirou', 'error');
-        return;
-      }
-      
-      checkoutState.coupon = {
-        code: couponCode,
-        ...coupon
-      };
-      
-      // Show applied coupon
-      document.getElementById('coupon-text').textContent = `${couponCode}: ${coupon.description}`;
-      document.getElementById('coupon-applied').classList.add('visible');
-      couponInput.value = '';
-      couponInput.disabled = true;
-      
-      // Recalculate
-      calculateFinalTotal();
-      renderSummary();
-      
-      showToast('Sucesso!', `Cupom ${couponCode} aplicado com sucesso!`, 'success');
-    }
-    
-    function removeCoupon() {
-      checkoutState.coupon = null;
-      document.getElementById('coupon-applied').classList.remove('visible');
-      document.getElementById('coupon-input').disabled = false;
-      
-      // Recalculate
-      calculateFinalTotal();
-      renderSummary();
-      
-      showToast('Cupom removido', 'O cupom foi removido do pedido', 'success');
-    }
-    
-    /* ============================================
-       CALCULATIONS
-       ============================================ */
-    function calculateSubtotal() {
-      checkoutState.subtotal = checkoutState.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    }
-    
-    /**
-     * Calcula o frete baseado na distância e valor da compra
-     * REGRAS:
-     * - Compra >= R$ 300,00 → Frete fixo R$ 10,00
-     * - Compra < R$ 100,00 → Frete grátis até 5km
-     * - Tabela normal para outros casos
-     */
-    function calculateFrete(distance, subtotal) {
-      // Regra especial: compra >= R$ 300
-      if (subtotal >= 300) {
-        return { value: 10.00, rule: 'Compras acima de R$ 300,00 têm frete fixo de R$ 10,00' };
-      }
-      
-      // Regra especial: compra < R$ 100
-      if (subtotal < 100) {
-        if (distance <= 5) {
-          return { value: 0, rule: 'Frete grátis para compras abaixo de R$ 100,00 em distâncias de até 5km! 🎉' };
-        }
-      }
-      
-      // Tabela normal
-      if (distance < 3) {
-        return { value: 0, rule: 'Frete grátis! 🎉' };
-      } else if (distance < 5) {
-        return { value: 2.00, rule: 'Frete para distância de 3-5km' };
-      } else if (distance < 7) {
-        return { value: 3.50, rule: 'Frete para distância de 5-7km' };
-      } else if (distance <= 8.5) {
-        return { value: 5.00, rule: 'Frete para distância de 7-8.5km' };
-      } else {
-        return { value: 10.00, rule: 'Frete para distância acima de 10km' };
-      }
-    }
-    
-    /**
-     * PLACEHOLDER: Calcular distância entre dois endereços
-     */
-    async function calculateDistance(customerAddress) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const mockDistance = Math.random() * 12;
-      return mockDistance;
-    }
-    
-    /**
-     * Calcula o total final com descontos e taxas
-     */
-    function calculateFinalTotal() {
-      let baseTotal = checkoutState.subtotal;
-      let freteValue = checkoutState.frete;
-      let discount = 0;
-      
-      // Apply coupon
-      if (checkoutState.coupon) {
-        if (checkoutState.coupon.type === 'percent') {
-          discount = baseTotal * (checkoutState.coupon.value / 100);
-        } else if (checkoutState.coupon.type === 'freeShipping') {
-          freteValue = 0;
-        }
-      }
-      
-      checkoutState.discount = discount;
-      const subtotalWithDiscount = baseTotal - discount;
-      
-      // If credit card, apply installment fees
-      if (checkoutState.paymentType === 'credito' && checkoutState.paymentData.installments) {
-        const rate = CONFIG.INSTALLMENT_RATES[checkoutState.paymentData.installments];
-        checkoutState.total = (subtotalWithDiscount + freteValue) * (1 + rate / 100);
-      } else {
-        checkoutState.total = subtotalWithDiscount + freteValue;
-      }
-    }
-    
-    /* ============================================
-       INSTALLMENTS CALCULATION
-       ============================================ */
-    function calculateInstallments() {
-      const installmentsSelect = document.getElementById('installments');
-      const installmentTotal = document.getElementById('installment-total');
-      const numInstallments = parseInt(installmentsSelect.value);
-      
-      checkoutState.paymentData.installments = numInstallments;
-      checkoutState.paymentData.rate = CONFIG.INSTALLMENT_RATES[numInstallments];
-      
-      calculateFinalTotal();
-      renderSummary();
-      
-      const totalWithFees = checkoutState.total;
-      const installmentValue = totalWithFees / numInstallments;
-      
-      if (numInstallments === 1) {
-        installmentTotal.innerHTML = `
-          Total à vista: <strong>R$ ${totalWithFees.toFixed(2)}</strong>
-        `;
-      } else {
-        installmentTotal.innerHTML = `
-          ${numInstallments}x de <strong>R$ ${installmentValue.toFixed(2)}</strong><br>
-          Total: R$ ${totalWithFees.toFixed(2)}
-        `;
-      }
-    }
-    
-    /* ============================================
-       DELIVERY HANDLING
-       ============================================ */
-    function selectDeliveryType(type) {
-      checkoutState.deliveryType = type;
-      
-      // Update UI
-      document.querySelectorAll('.delivery-option').forEach(opt => {
-        opt.classList.remove('selected');
-      });
-      document.querySelector(`.delivery-option[data-type="${type}"]`).classList.add('selected');
-      
-      // Show/hide relevant sections
-      const addressForm = document.getElementById('address-form');
-      const storeAddress = document.getElementById('store-address');
-      
-      if (type === 'entrega') {
-        addressForm.classList.add('visible');
-        storeAddress.classList.remove('visible');
-      } else {
-        addressForm.classList.remove('visible');
-        storeAddress.classList.add('visible');
-        checkoutState.frete = 0;
-        checkoutState.distance = 0;
-        calculateFinalTotal();
-        renderSummary();
-      }
-    }
-    
-    async function handleCepInput(event) {
-      let value = event.target.value.replace(/\D/g, '');
-      
-      if (value.length > 5) {
-        value = value.substring(0, 5) + '-' + value.substring(5, 8);
-      }
-      
-      event.target.value = value;
-      
-      if (value.replace(/\D/g, '').length === 8) {
-        await fetchAddressByCep(value);
-        await calculateAndShowFrete();
-      }
-    }
-    
-    async function fetchAddressByCep(cep) {
-      try {
-        const cleanCep = cep.replace(/\D/g, '');
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await response.json();
-        
-        if (data.erro) {
-          showToast('CEP inválido', 'O CEP informado não foi encontrado.', 'error');
-          return;
-        }
-        
-        document.getElementById('street').value = data.logradouro || '';
-        document.getElementById('neighborhood').value = data.bairro || '';
-        document.getElementById('city').value = data.localidade || '';
-        document.getElementById('state').value = data.uf || '';
-      } catch (error) {
-        console.error('Error fetching CEP:', error);
-        showToast('Erro', 'Não foi possível buscar o endereço. Verifique o CEP.', 'error');
-      }
-    }
-    
-    async function calculateAndShowFrete() {
-      const freteInfo = document.getElementById('frete-info');
-      freteInfo.style.display = 'block';
-      freteInfo.className = 'frete-info';
-      freteInfo.innerHTML = '<p>Calculando frete...</p>';
-      
-      const customerAddress = {
-        cep: document.getElementById('cep').value,
-        street: document.getElementById('street').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value
-      };
-      
-      try {
-        // PLACEHOLDER: Calculate real distance
-        const distance = await calculateDistance(customerAddress);
-        checkoutState.distance = distance;
-        
-        const freteResult = calculateFrete(distance, checkoutState.subtotal);
-        
-        // Check if coupon gives free shipping
-        if (checkoutState.coupon && checkoutState.coupon.type === 'freeShipping') {
-          checkoutState.frete = 0;
-        } else {
-          checkoutState.frete = freteResult.value;
-        }
-        
-        if (checkoutState.frete === 0) {
-          freteInfo.className = 'frete-info success';
-        }
-        
-        freteInfo.innerHTML = `
-          <h4>Frete calculado</h4>
-          <p><strong>Distância aproximada:</strong> ${distance.toFixed(1)} km</p>
-          <p><strong>Valor do frete:</strong> ${checkoutState.frete === 0 ? 'Grátis! 🎉' : `R$ ${checkoutState.frete.toFixed(2)}`}</p>
-          <p style="font-size: 0.85rem; margin-top: 0.5rem;">${freteResult.rule}</p>
-        `;
-        
-        calculateFinalTotal();
-        renderSummary();
-      } catch (error) {
-        console.error('Error calculating frete:', error);
-        freteInfo.className = 'frete-info';
-        freteInfo.innerHTML = '<p>Erro ao calcular frete. Tente novamente.</p>';
-      }
-    }
-    
-    /* ============================================
-       PAYMENT HANDLING
-       ============================================ */
-    function selectPayment(type) {
-      checkoutState.paymentType = type;
-      
-      // Update UI
-      document.querySelectorAll('.payment-option').forEach(opt => {
-        opt.classList.remove('selected');
-      });
-      document.querySelector(`.payment-option[data-payment="${type}"]`).classList.add('selected');
-      
-      // Show/hide installments section
-      const installmentsSection = document.getElementById('installments-section');
-      if (type === 'credito') {
-        installmentsSection.classList.add('visible');
-        checkoutState.paymentData.installments = 1;
-        checkoutState.paymentData.rate = CONFIG.INSTALLMENT_RATES[1];
-        calculateInstallments();
-      } else {
-        installmentsSection.classList.remove('visible');
-        checkoutState.paymentData = {};
-        calculateFinalTotal();
-        renderSummary();
-      }
-      
-      document.getElementById('btn-payment-next').disabled = false;
-    }
-    
-    /* ============================================
-       NAVIGATION
-       ============================================ */
-    async function proceedToPayment() {
-      if (!checkoutState.deliveryType) {
-        showToast('Atenção', 'Por favor, selecione o tipo de recebimento.', 'warning');
-        return;
-      }
-      
-      if (checkoutState.deliveryType === 'entrega') {
-        const cep = document.getElementById('cep').value.trim();
-        const street = document.getElementById('street').value.trim();
-        const number = document.getElementById('number').value.trim();
-        const neighborhood = document.getElementById('neighborhood').value.trim();
-        const city = document.getElementById('city').value.trim();
-        const state = document.getElementById('state').value.trim();
-        const name = document.getElementById('customer-name').value.trim();
-        const phone = document.getElementById('customer-phone').value.trim();
-        
-        if (!cep || !street || !number || !neighborhood || !city || !state || !name || !phone) {
-          const missingFields = [];
-          if (!cep) missingFields.push('CEP');
-          if (!street) missingFields.push('Rua');
-          if (!number) missingFields.push('Número');
-          if (!neighborhood) missingFields.push('Bairro');
-          if (!city) missingFields.push('Cidade');
-          if (!state) missingFields.push('Estado');
-          if (!name) missingFields.push('Nome');
-          if (!phone) missingFields.push('Telefone');
-          
-          showToast('Campos obrigatórios', `Preencha: ${missingFields.join(', ')}`, 'error');
-          return;
-        }
-        
-        checkoutState.deliveryData = {
-          type: 'entrega',
-          cep,
-          street,
-          number,
-          complement: document.getElementById('complement').value.trim(),
-          neighborhood,
-          city,
-          state,
-          name,
-          phone
-        };
-        
-        // Calculate frete if not done yet
-        if (checkoutState.distance === null) {
-          await calculateAndShowFrete();
-        }
-      } else {
-        const name = document.getElementById('pickup-name').value.trim();
-        const phone = document.getElementById('pickup-phone').value.trim();
-        const date = document.getElementById('pickup-date').value;
-        const time = document.getElementById('pickup-time').value;
-        
-        if (!name || !phone || !date || !time) {
-          const missingFields = [];
-          if (!name) missingFields.push('Nome');
-          if (!phone) missingFields.push('Telefone');
-          if (!date) missingFields.push('Data da retirada');
-          if (!time) missingFields.push('Horário da retirada');
-          
-          showToast('Campos obrigatórios', `Preencha: ${missingFields.join(', ')}`, 'error');
-          return;
-        }
-        
-        checkoutState.deliveryData = {
-          type: 'retirada',
-          name,
-          phone,
-          pickupDate: date,
-          pickupTime: time
-        };
-        
-        checkoutState.frete = 0;
-        calculateFinalTotal();
-      }
-      
-      // Navigate to payment step
-      document.getElementById('step-1-delivery').style.display = 'none';
-      document.getElementById('step-2-payment').style.display = 'block';
-      updateProgress(2);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    function backToDelivery() {
-      document.getElementById('step-1-delivery').style.display = 'block';
-      document.getElementById('step-2-payment').style.display = 'none';
-      updateProgress(1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    function proceedToReview() {
-      if (!checkoutState.paymentType) {
-        showToast('Atenção', 'Por favor, selecione uma forma de pagamento.', 'warning');
-        return;
-      }
-      
-      // Render review
-      renderReview();
-      
-      // Navigate to review step
-      document.getElementById('step-2-payment').style.display = 'none';
-      document.getElementById('step-3-review').style.display = 'block';
-      updateProgress(3);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    function backToPayment() {
-      document.getElementById('step-2-payment').style.display = 'block';
-      document.getElementById('step-3-review').style.display = 'none';
-      updateProgress(2);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    
-    /* ============================================
-       REVIEW RENDERING
-       ============================================ */
-    function renderReview() {
-      // Products
-      const productsHtml = checkoutState.cart.map(item => `
-        <div class="review-item">
-          <div class="review-label">${item.name}</div>
-          <div class="review-value">Quantidade: ${item.quantity} | R$ ${(item.price * item.quantity).toFixed(2)}</div>
-        </div>
-      `).join('');
-      document.getElementById('review-products').innerHTML = productsHtml;
-      
-      // Delivery
-      const deliveryTitle = document.getElementById('review-delivery-title');
-      const deliveryHtml = document.getElementById('review-delivery');
-      
-      if (checkoutState.deliveryData.type === 'entrega') {
-        deliveryTitle.textContent = '🚚 Entrega';
-        deliveryHtml.innerHTML = `
-          <div class="review-item">
-            <div class="review-label">Nome</div>
-            <div class="review-value">${checkoutState.deliveryData.name}</div>
-          </div>
-          <div class="review-item">
-            <div class="review-label">Telefone</div>
-            <div class="review-value">${checkoutState.deliveryData.phone}</div>
-          </div>
-          <div class="review-item">
-            <div class="review-label">Endereço</div>
-            <div class="review-value">
-              ${checkoutState.deliveryData.street}, ${checkoutState.deliveryData.number}
-              ${checkoutState.deliveryData.complement ? ` - ${checkoutState.deliveryData.complement}` : ''}<br>
-              ${checkoutState.deliveryData.neighborhood}, ${checkoutState.deliveryData.city} - ${checkoutState.deliveryData.state}<br>
-              CEP: ${checkoutState.deliveryData.cep}
-            </div>
-          </div>
-        `;
-      } else {
-        deliveryTitle.textContent = '🏪 Retirada na loja';
-        deliveryHtml.innerHTML = `
-          <div class="review-item">
-            <div class="review-label">Nome</div>
-            <div class="review-value">${checkoutState.deliveryData.name}</div>
-          </div>
-          <div class="review-item">
-            <div class="review-label">Telefone</div>
-            <div class="review-value">${checkoutState.deliveryData.phone}</div>
-          </div>
-          <div class="review-item">
-            <div class="review-label">Data da retirada</div>
-            <div class="review-value">${new Date(checkoutState.deliveryData.pickupDate).toLocaleDateString('pt-BR')}</div>
-          </div>
-          <div class="review-item">
-            <div class="review-label">Horário da retirada</div>
-            <div class="review-value">${checkoutState.deliveryData.pickupTime}</div>
-          </div>
-          <div class="review-item">
-            <div class="review-label">Local</div>
-            <div class="review-value">
-              Rua Itacy Rodovalho de Alencar, 110<br>
-              CEP: 63504-460
-            </div>
-          </div>
-        `;
-      }
-      
-      // Payment
-      let paymentText = '';
-      if (checkoutState.paymentType === 'pix') {
-        paymentText = 'Pix';
-      } else if (checkoutState.paymentType === 'dinheiro') {
-        paymentText = 'Dinheiro';
-      } else if (checkoutState.paymentType === 'credito') {
-        const installments = checkoutState.paymentData.installments;
-        const installmentValue = checkoutState.total / installments;
-        if (installments === 1) {
-          paymentText = `Cartão de Crédito - À vista (R$ ${checkoutState.total.toFixed(2)})`;
-        } else {
-          paymentText = `Cartão de Crédito - ${installments}x de R$ ${installmentValue.toFixed(2)} (Total: R$ ${checkoutState.total.toFixed(2)})`;
-        }
-      }
-      
-      document.getElementById('review-payment').innerHTML = `
-        <div class="review-item">
-          <div class="review-value">${paymentText}</div>
-        </div>
-      `;
-      
-      // Coupon
-      if (checkoutState.coupon) {
-        document.getElementById('review-coupon-section').style.display = 'block';
-        document.getElementById('review-coupon').innerHTML = `
-          <div class="review-item">
-            <div class="review-value">${checkoutState.coupon.code}: ${checkoutState.coupon.description}</div>
-          </div>
-        `;
-      } else {
-        document.getElementById('review-coupon-section').style.display = 'none';
-      }
-    }
-    
-    /* ============================================
-       FINALIZE ORDER
-       ============================================ */
-    async function finalizeOrder() {
-      // Hide review, show success with loading
-      document.getElementById('step-3-review').style.display = 'none';
-      document.getElementById('step-4-success').classList.add('visible');
-      updateProgress(4);
-      
-      const successIcon = document.getElementById('success-icon');
-      const successMessage = document.getElementById('success-message');
-      
-      successIcon.innerHTML = '<div class="spinner"></div>';
-      successMessage.innerHTML = '<h2>Processando seu pedido...</h2><p>Aguarde um momento.</p>';
-      
-      const orderData = {
-        cart: checkoutState.cart,
-        delivery: checkoutState.deliveryData,
-        payment: {
-          type: checkoutState.paymentType,
-          data: checkoutState.paymentData
-        },
-        coupon: checkoutState.coupon,
-        subtotal: checkoutState.subtotal,
-        discount: checkoutState.discount,
-        frete: checkoutState.frete,
-        total: checkoutState.total,
-        timestamp: Date.now()
-      };
-      
-      try {
-        // PLACEHOLDER: Save order to database/spreadsheet
-        const result = await saveOrder(orderData);
-        
-        if (result.success) {
-          // Clear cart
-          localStorage.removeItem('sublime_cart');
-          localStorage.removeItem('sublime_checkout_data');
-          
-          // Save confirmation
-          localStorage.setItem('sublime_order_confirmed', JSON.stringify({
-            orderId: result.orderId,
-            total: orderData.total
-          }));
-          
-          // Show success
-          successIcon.innerHTML = `
-            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          `;
-          
-          let paymentInfo = '';
-          if (checkoutState.paymentType === 'credito' && checkoutState.paymentData.installments) {
-            const { installments } = checkoutState.paymentData;
-            const installmentValue = checkoutState.total / installments;
-            paymentInfo = `
-              <p style="margin-top: 1rem; font-size: 1.1rem; color: var(--accent);">
-                <strong>${installments}x de R$ ${installmentValue.toFixed(2)}</strong><br>
-                <span style="font-size: 0.9rem;">Total: R$ ${checkoutState.total.toFixed(2)}</span>
-              </p>
-            `;
-          }
-          
-          let pickupInfo = '';
-          if (checkoutState.deliveryData.type === 'retirada') {
-            pickupInfo = `
-              <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
-                <strong>📅 Retirada agendada:</strong><br>
-                ${new Date(checkoutState.deliveryData.pickupDate).toLocaleDateString('pt-BR')}<br>
-                ${checkoutState.deliveryData.pickupTime}
-              </div>
-            `;
-          }
-          
-          successMessage.innerHTML = `
-            <h2>✓ Pedido confirmado com sucesso! 🎉</h2>
-            <p>Seu pedido foi reservado e em breve entraremos em contato.</p>
-            
-            <div class="order-id-display">${result.orderId}</div>
-            ${paymentInfo}
-            ${pickupInfo}
-            
-            <p style="margin-top: 1rem; color: var(--text-secondary);">
-              Um vendedor entrará em contato para confirmar os detalhes.
-            </p>
-            
-            <div class="btn-group" style="justify-content: center; margin-top: 2rem;">
-              <button class="btn btn-primary" onclick="returnHome()">
-                Voltar à loja
-              </button>
-            </div>
-          `;
-        } else {
-          throw new Error('Erro ao processar pedido');
-        }
-      } catch (error) {
-        console.error('Error finalizing order:', error);
-        
-        successIcon.innerHTML = `
-          <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        `;
-        successIcon.style.background = 'var(--error)';
-        
-        successMessage.innerHTML = `
-          <h2>Erro ao processar pedido</h2>
-          <p>Ocorreu um erro. Por favor, tente novamente.</p>
-          
-          <div class="btn-group" style="justify-content: center; margin-top: 2rem;">
-            <button class="btn btn-secondary" onclick="backToPayment()">Tentar novamente</button>
-          </div>
-        `;
-        
-        showToast('Erro', 'Não foi possível processar o pedido.', 'error');
-      }
-    }
-    
-    /**
-     * PLACEHOLDER: Salvar pedido na planilha/banco de dados
-     */
-    async function saveOrder(orderData) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // MOCK: Em produção, fazer POST para API/Google Sheets
-      /*
-      const response = await fetch(CONFIG.API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
-      });
-      
-      const data = await response.json();
-      return data;
-      */
-      
-      return {
-        success: true,
-        orderId: 'ORD-' + Date.now()
-      };
-    }
-    
-    /* ============================================
-       RENDER FUNCTIONS
-       ============================================ */
-    function renderSummary() {
-      // Items
-      const itemsContainer = document.getElementById('summary-items');
-      itemsContainer.innerHTML = checkoutState.cart.map(item => `
-        <div class="summary-item">
-          <img src="${item.image}" alt="${item.name}" class="summary-item-img">
-          <div class="summary-item-details">
-            <div class="summary-item-name">${item.name}</div>
-            <div class="summary-item-qty">Quantidade: ${item.quantity}</div>
-          </div>
-          <div class="summary-item-price">R$ ${(item.price * item.quantity).toFixed(2)}</div>
-        </div>
-      `).join('');
-      
-      // Calculate final total
-      calculateFinalTotal();
-      
-      // Totals
-      let totalsHtml = `
-        <div class="summary-row">
-          <span>Subtotal:</span>
-          <span>R$ ${checkoutState.subtotal.toFixed(2)}</span>
-        </div>
-      `;
-      
-      // Discount
-      if (checkoutState.discount > 0) {
-        totalsHtml += `
-          <div class="summary-row discount">
-            <span>Desconto:</span>
-            <span>- R$ ${checkoutState.discount.toFixed(2)}</span>
-          </div>
-        `;
-      }
-      
-      // Frete
-      const freteValue = checkoutState.coupon && checkoutState.coupon.type === 'freeShipping' ? 0 : checkoutState.frete;
-      totalsHtml += `
-        <div class="summary-row frete ${freteValue === 0 ? 'free' : ''}">
-          <span>Frete:</span>
-          <span>${freteValue === 0 ? 'Grátis 🎉' : `R$ ${freteValue.toFixed(2)}`}</span>
-        </div>
-      `;
-      
-      // Credit card fees
-      if (checkoutState.paymentType === 'credito' && checkoutState.paymentData.rate) {
-        totalsHtml += `
-          <div class="summary-row">
-            <span>Taxa cartão (${checkoutState.paymentData.rate}%):</span>
-            <span>R$ ${((checkoutState.subtotal - checkoutState.discount + freteValue) * (checkoutState.paymentData.rate / 100)).toFixed(2)}</span>
-          </div>
-        `;
-      }
-      
-      // Total
-      totalsHtml += `
-        <div class="summary-row total">
-          <span>Total:</span>
-          <span>R$ ${checkoutState.total.toFixed(2)}</span>
-        </div>
-      `;
-      
-      document.getElementById('summary-totals').innerHTML = totalsHtml;
-    }
-    
-    /* ============================================
-       UTILITY FUNCTIONS
-       ============================================ */
-    function returnHome() {
-      window.location.href = '/index.html';
-    }
-    
-    /* ============================================
-       START
-       ============================================ */
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initCheckout);
-    } else {
-      initCheckout();
-    }
-  </script>
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
   
+  <!-- JavaScript -->
+  <script src="/js/pag.js"></script>
 </body>
 </html>
