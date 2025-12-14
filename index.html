@@ -31,15 +31,9 @@
         <input type="text" id="header-search" placeholder="Buscar produtos..." aria-label="Buscar produtos">
       </div>
       
-      <div class="header-actions">
-        <button class="icon-btn" onclick="toggleTheme()" aria-label="Alternar tema">
-          <svg width="20" height="20" fill="currentColor">
-            <circle cx="10" cy="10" r="5"/>
-          </svg>
-        </button>
-        
+      
         <button class="icon-btn" onclick="toggleCart()" aria-label="Carrinho">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="25" height="25" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5m12-5l2 5m-2-5v-1m-6 1v-1m0 7a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"/>
           </svg>
           <span class="cart-badge" id="cart-badge">0</span>
@@ -67,11 +61,7 @@
     <div class="carousel-dots"></div>
   </section>
   
-  <!-- HERO SECTION -->
-  <section class="hero">
-    <h1>Bem-vindo à Sublime</h1>
-    <p>Produtos de qualidade para transformar seu dia a dia</p>
-  </section>
+
   
   <!-- FILTERS -->
   <section class="filters-section">
@@ -157,21 +147,19 @@
   <!-- SIDE MENU -->
   <div class="side-menu" id="side-menu">
     <div class="menu-item" onclick="toggleTheme()">
-      <svg width="20" height="20" fill="currentColor">
-        <circle cx="10" cy="10" r="5"/>
-      </svg>
+      <?xml version="1.0" encoding="utf-8"?><svg version="1.1" width="20" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 122.88 122.89" style="enable-background:new 0 0 122.88 122.89" xml:space="preserve"><g><path d="M49.06,1.27c2.17-0.45,4.34-0.77,6.48-0.98c2.2-0.21,4.38-0.31,6.53-0.29c1.21,0.01,2.18,1,2.17,2.21 c-0.01,0.93-0.6,1.72-1.42,2.03c-9.15,3.6-16.47,10.31-20.96,18.62c-4.42,8.17-6.1,17.88-4.09,27.68l0.01,0.07 c2.29,11.06,8.83,20.15,17.58,25.91c8.74,5.76,19.67,8.18,30.73,5.92l0.07-0.01c7.96-1.65,14.89-5.49,20.3-10.78 c5.6-5.47,9.56-12.48,11.33-20.16c0.27-1.18,1.45-1.91,2.62-1.64c0.89,0.21,1.53,0.93,1.67,1.78c2.64,16.2-1.35,32.07-10.06,44.71 c-8.67,12.58-22.03,21.97-38.18,25.29c-16.62,3.42-33.05-0.22-46.18-8.86C14.52,104.1,4.69,90.45,1.27,73.83 C-2.07,57.6,1.32,41.55,9.53,28.58C17.78,15.57,30.88,5.64,46.91,1.75c0.31-0.08,0.67-0.16,1.06-0.25l0.01,0l0,0L49.06,1.27 L49.06,1.27z"/></g></svg>
       <span>Alternar Tema</span>
     </div>
     
     <div class="menu-item" onclick="window.location.href='checharpedido.html'">
-      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+      <svg width="25" height="25" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
       </svg>
       <span>Checar Pedido</span>
     </div>
     
     <div class="menu-item" onclick="openWhatsApp()">
-      <svg width="20" height="20" fill="currentColor">
+      <svg width="25" height="25" fill="currentColor">
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
       </svg>
       <span>WhatsApp</span>
