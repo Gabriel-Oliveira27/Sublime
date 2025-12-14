@@ -447,7 +447,7 @@ function goToCheckout() {
     return;
   }
   
-  window.location.href = 'finalizarpagamento.html';
+  window.location.href = 'pages/finalizarpagamento.html';
 }
 
 /* ============================================
