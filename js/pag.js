@@ -64,8 +64,8 @@ let checkoutState = {
     state: '',
     lat: null,
     lon: null,
-    distanceKm: 0,
-    shippingCost: 0
+    distanceKm: null,
+    shippingCost: null
   },
   payment: {
     method: '', // 'PIX', 'Dinheiro', 'Credito'
@@ -141,19 +141,61 @@ function renderSummaryItems() {
 }
 
 function updateTotals() {
-  const subtotal = checkoutState.subtotal;
-  const shipping = checkoutState.delivery.shippingCost || 0;
-  const discount = checkoutState.coupon.discount || 0;
-  const total = subtotal + shipping - discount;
-  
+  const subtotal = Number(checkoutState.subtotal || 0);
+
+  // Determina desconto monetário (se houver)
+  let discountValue = 0;
+  if (checkoutState.coupon && checkoutState.coupon.type === 'percent') {
+    // checkoutState.coupon.value armazena o percentual (ex: 10)
+    const pct = Number(checkoutState.coupon.value || 0);
+    if (!isNaN(pct) && pct > 0) {
+      discountValue = +(subtotal * (pct / 100)).toFixed(2);
+      // manter também o campo discount para compatibilidade com outras partes do código
+      checkoutState.coupon.discount = discountValue;
+    } else {
+      discountValue = Number(checkoutState.coupon.discount || 0);
+    }
+  } else {
+    // se não for percent, pode já ter um valor monetário
+    discountValue = Number(checkoutState.coupon.discount || 0);
+  }
+
+  // Determina frete, respeitando cupom de frete grátis
+  let shippingRaw = checkoutState.delivery.shippingCost;
+  let shipping = (typeof shippingRaw === 'number' && !isNaN(shippingRaw)) ? shippingRaw : null;
+
+  // aceitar dois nomes possíveis para o tipo de frete grátis
+  if (checkoutState.coupon && (checkoutState.coupon.type === 'fretegratis' || checkoutState.coupon.type === 'free_shipping')) {
+    shipping = 0;
+    checkoutState.delivery.shippingCost = 0; // garante estado consistente
+  }
+
+  // calcula total final
+  const total = +(subtotal - (discountValue || 0) + (shipping || 0)).toFixed(2);
+
   checkoutState.total = total;
-  
-  // Atualizar resumo lateral
-  document.getElementById('summary-subtotal').textContent = `R$ ${subtotal.toFixed(2)}`;
-  document.getElementById('summary-shipping').textContent = shipping > 0 ? `R$ ${shipping.toFixed(2)}` : (checkoutState.delivery.type === 'retirada' ? 'Grátis' : 'Calcular');
-  document.getElementById('summary-discount').textContent = discount > 0 ? `-R$ ${discount.toFixed(2)}` : 'R$ 0,00';
-  document.getElementById('summary-total').textContent = `R$ ${total.toFixed(2)}`;
+
+  // atualiza UI (verifica elementos)
+  const elSubtotal = document.getElementById('summary-subtotal');
+  const elShipping = document.getElementById('summary-shipping');
+  const elDiscount = document.getElementById('summary-discount');
+  const elTotal = document.getElementById('summary-total');
+
+  if (elSubtotal) elSubtotal.textContent = `R$ ${subtotal.toFixed(2)}`;
+
+  let shippingText;
+  if (checkoutState.delivery.type === 'retirada') {
+    shippingText = 'Grátis';
+  } else {
+    shippingText = (shipping !== null) ? `R$ ${shipping.toFixed(2)}` : 'Calcular';
+  }
+  if (elShipping) elShipping.textContent = shippingText;
+
+  if (elDiscount) elDiscount.textContent = (discountValue && discountValue > 0) ? `-R$ ${discountValue.toFixed(2)}` : 'R$ 0,00';
+  if (elTotal) elTotal.textContent = `R$ ${total.toFixed(2)}`;
 }
+
+
 
 /* ============================================
    MÁSCARAS DE INPUT
@@ -390,10 +432,11 @@ function validateStep2() {
       return false;
     }
     
-    if (checkoutState.delivery.shippingCost === 0 && checkoutState.subtotal > 99 && checkoutState.subtotal <= 350) {
-      showToast('Calcule o frete antes de continuar', 'error');
-      return false;
-    }
+    if (checkoutState.subtotal > 99 && checkoutState.subtotal <= 350 && (checkoutState.delivery.shippingCost === null || checkoutState.delivery.shippingCost === undefined)) {
+  showToast('Calcule o frete antes de continuar', 'error');
+  return false;
+}
+
     
     return true;
   }
@@ -476,31 +519,41 @@ function selectDeliveryType(type) {
    ============================================ */
 async function searchCEP() {
   const cepInput = document.getElementById('delivery-cep');
-  const cep = cepInput.value.replace(/\D/g, '');
-  
+  const cep = (cepInput.value || '').replace(/\D/g, '');
+
   if (cep.length !== 8) {
     showToast('CEP inválido', 'error');
     return;
   }
-  
+
   showLoading('Buscando CEP...');
-  
+
   try {
     const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
     const data = await response.json();
-    
+
     if (data.erro) {
       throw new Error('CEP não encontrado');
     }
-    
+
     // Preencher campos
     document.getElementById('delivery-street').value = data.logradouro || '';
     document.getElementById('delivery-neighborhood').value = data.bairro || '';
     document.getElementById('delivery-city').value = data.localidade || '';
     document.getElementById('delivery-state').value = data.uf || '';
-    
+
+    // Salvar no estado
+    checkoutState.delivery.cep = cep;
+    checkoutState.delivery.street = data.logradouro || '';
+    checkoutState.delivery.neighborhood = data.bairro || '';
+    checkoutState.delivery.city = data.localidade || '';
+    checkoutState.delivery.state = data.uf || '';
+
     showToast('CEP encontrado!', 'success');
-    
+
+    // Tenta calcular o frete automaticamente (usa geocoding + fallback)
+    await calculateShipping();
+
   } catch (error) {
     console.error('Erro ao buscar CEP:', error);
     showToast('CEP não encontrado', 'error');
@@ -508,19 +561,16 @@ async function searchCEP() {
     hideLoading();
   }
 }
-
-/* ============================================
-   GEOCODING (NOMINATIM - OpenStreetMap)
-   ============================================ */
 async function geocodeOrigin() {
   try {
     const address = `${API_CONFIG.ORIGIN_ADDRESS.street}, ${API_CONFIG.ORIGIN_ADDRESS.city}, ${API_CONFIG.ORIGIN_ADDRESS.state}, ${API_CONFIG.ORIGIN_ADDRESS.cep}`;
     const coords = await geocodeAddress(address);
-    
     if (coords) {
       API_CONFIG.ORIGIN_ADDRESS.lat = coords.lat;
       API_CONFIG.ORIGIN_ADDRESS.lon = coords.lon;
       console.log('✅ Origem geocodificada:', coords);
+    } else {
+      console.warn('⚠️ Não foi possível geocodificar a origem; fallback será usado.');
     }
   } catch (error) {
     console.warn('⚠️ Erro ao geocodificar origem:', error);
@@ -529,23 +579,23 @@ async function geocodeOrigin() {
 
 async function geocodeAddress(address) {
   try {
+    // Tentativa direta no Nominatim (sem setar User-Agent — browsers proíbem isso)
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Sublime E-commerce'
-      }
-    });
-    
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn('Geocoding response not ok:', response.status);
+      return null;
+    }
     const data = await response.json();
-    
+
     if (data && data.length > 0) {
       return {
         lat: parseFloat(data[0].lat),
         lon: parseFloat(data[0].lon)
       };
     }
-    
+
     return null;
   } catch (error) {
     console.error('Erro no geocoding:', error);
@@ -557,38 +607,101 @@ async function geocodeAddress(address) {
    CÁLCULO DE FRETE
    ============================================ */
 async function calculateShipping() {
-  const city = document.getElementById('delivery-city').value.trim();
-  if (!city) {
-    showToast('Informe a cidade', 'error');
+  // coleta dados do formulário / estado
+  const cep = (document.getElementById('delivery-cep')?.value || '').replace(/\D/g, '');
+  const street = (document.getElementById('delivery-street')?.value || '').trim();
+  const number = (document.getElementById('delivery-number')?.value || '').trim();
+  const neighborhood = (document.getElementById('delivery-neighborhood')?.value || '').trim();
+  const city = (document.getElementById('delivery-city')?.value || '').trim();
+  const state = (document.getElementById('delivery-state')?.value || '').trim();
+
+  // validações básicas
+  if (!city || !state || !cep) {
+    showToast('Informe CEP, cidade e estado para calcular o frete', 'error');
     return;
   }
 
-  let cost = 0;
+  showLoading('Calculando frete...');
 
-  if (checkoutState.subtotal <= 99) {
-    cost = 0;
-  } else if (checkoutState.subtotal > 350) {
-    cost = 10;
-  } else {
-    const originCity = API_CONFIG.ORIGIN_ADDRESS.city.toLowerCase();
-    const destCity = city.toLowerCase();
-
-    if (originCity !== destCity) {
-      cost = 15;
-    } else {
-      cost = 7; // valor médio local
+  try {
+    // tenta geocodificar destino (endereço completo)
+    let destCoords = null;
+    const fullAddress = `${street} ${number}, ${neighborhood}, ${city} ${state}, ${cep}`;
+    if (street && number) {
+      destCoords = await geocodeAddress(fullAddress);
     }
+
+    // se não achou com endereço completo, tenta com cidade + cep
+    if (!destCoords) {
+      destCoords = await geocodeAddress(`${city}, ${state}, ${cep}`);
+    }
+
+    // garante origem geocodificada
+    if (!API_CONFIG.ORIGIN_ADDRESS.lat || !API_CONFIG.ORIGIN_ADDRESS.lon) {
+      await geocodeOrigin();
+    }
+
+    let distanceKm = null;
+
+    if (destCoords && API_CONFIG.ORIGIN_ADDRESS.lat && API_CONFIG.ORIGIN_ADDRESS.lon) {
+      // calcula distância real (haversine)
+      distanceKm = calculateHaversineDistance(
+        Number(API_CONFIG.ORIGIN_ADDRESS.lat),
+        Number(API_CONFIG.ORIGIN_ADDRESS.lon),
+        Number(destCoords.lat),
+        Number(destCoords.lon)
+      );
+      console.log('Distância geocodificada (km):', distanceKm);
+    } else {
+      // fallback heurístico com base no CEP/cidade caso geocoding falhe
+      console.warn('Fallback: usando heurística por CEP/cidade para estimar distância');
+      const originCepPrefix = (API_CONFIG.ORIGIN_ADDRESS.cep || '').replace(/\D/g, '').substring(0,5);
+      const destCepPrefix = (cep || '').substring(0,5);
+      if (originCepPrefix && destCepPrefix && originCepPrefix === destCepPrefix) {
+        distanceKm = Math.random() * 2.5; // mesma região: 0-2.5km
+      } else if (city && API_CONFIG.ORIGIN_ADDRESS.city && city.toLowerCase() === API_CONFIG.ORIGIN_ADDRESS.city.toLowerCase()) {
+        distanceKm = 4 + Math.random() * 3; // mesma cidade, estima 4-7km
+      } else {
+        distanceKm = 15; // outra cidade / sem dados
+      }
+      console.log('Distância heurística estimada (km):', distanceKm);
+    }
+
+    checkoutState.delivery.distanceKm = distanceKm;
+
+    // calcula custo via função de regras (reuse existing)
+    const shippingResult = calculateShippingCost(checkoutState.subtotal || 0, distanceKm, city);
+    checkoutState.delivery.shippingCost = shippingResult.cost;
+
+    // Atualiza UI (garantir elementos existem)
+    const shippingResultEl = document.getElementById('shipping-result');
+    const shippingValueEl = document.getElementById('shipping-value');
+    const distanceEl = document.getElementById('distance-km');
+    const noteEl = document.getElementById('shipping-note');
+
+    if (distanceEl) distanceEl.textContent = (typeof distanceKm === 'number') ? distanceKm.toFixed(1) : '—';
+    if (shippingValueEl) shippingValueEl.textContent = (typeof shippingResult.cost === 'number') ? shippingResult.cost.toFixed(2) : '—';
+    if (noteEl) {
+      if (shippingResult.note) {
+        noteEl.textContent = shippingResult.note;
+        noteEl.style.display = 'block';
+      } else {
+        noteEl.style.display = 'none';
+      }
+    }
+    if (shippingResultEl) shippingResultEl.style.display = 'block';
+
+    updateTotals();
+    showToast('Frete calculado!', 'success');
+
+  } catch (err) {
+    console.error('Erro ao calcular frete:', err);
+    showToast('Erro ao calcular frete. Tente novamente.', 'error');
+  } finally {
+    hideLoading();
   }
-
-  checkoutState.delivery.shippingCost = cost;
-  checkoutState.delivery.distanceKm = 0;
-
-  document.getElementById('shipping-result').style.display = 'block';
-  document.getElementById('shipping-value').textContent = cost.toFixed(2);
-
-  updateTotals();
-  showToast('Frete calculado!', 'success');
 }
+
 
 /* ============================================
    HAVERSINE (Distância geodésica)
@@ -665,41 +778,54 @@ function renderReviewStep() {
       <span>R$ ${(parseFloat(item.valor) * item.quantity).toFixed(2)}</span>
     </div>
   `).join('');
-  document.getElementById('review-items').innerHTML = itemsHTML;
-  
+  const reviewItemsEl = document.getElementById('review-items');
+  if (reviewItemsEl) reviewItemsEl.innerHTML = itemsHTML;
+
   // Recebimento
   let deliveryHTML = '';
   if (checkoutState.delivery.type === 'retirada') {
     deliveryHTML = `
       <p><strong>Tipo:</strong> Retirada no local</p>
-      <p><strong>Quem vai retirar:</strong> ${checkoutState.delivery.pickupWho}</p>
+      <p><strong>Quem vai retirar:</strong> ${checkoutState.delivery.pickupWho || ''}</p>
       <p><strong>Data:</strong> ${formatDate(checkoutState.delivery.pickupDate)}</p>
-      <p><strong>Horário:</strong> ${checkoutState.delivery.pickupTime}</p>
+      <p><strong>Horário:</strong> ${checkoutState.delivery.pickupTime || ''}</p>
       <p class="small-text">📍 ${API_CONFIG.ORIGIN_ADDRESS.street}, ${API_CONFIG.ORIGIN_ADDRESS.neighborhood}</p>
     `;
   } else {
+    const dist = checkoutState.delivery.distanceKm;
+    const distText = (dist === null || dist === undefined) ? '—' : `${Number(dist).toFixed(1)} km`;
+    const freight = checkoutState.delivery.shippingCost;
+    const freightText = (typeof freight === 'number') ? `R$ ${freight.toFixed(2)}` : '—';
+
     deliveryHTML = `
       <p><strong>Tipo:</strong> Entrega</p>
-      <p><strong>Endereço:</strong> ${checkoutState.delivery.street}, ${checkoutState.delivery.number}</p>
+      <p><strong>Endereço:</strong> ${checkoutState.delivery.street || ''}, ${checkoutState.delivery.number || ''}</p>
       ${checkoutState.delivery.complement ? `<p><strong>Complemento:</strong> ${checkoutState.delivery.complement}</p>` : ''}
-      <p>${checkoutState.delivery.neighborhood}, ${checkoutState.delivery.city}/${checkoutState.delivery.state}</p>
-      <p><strong>CEP:</strong> ${checkoutState.delivery.cep}</p>
-      <p><strong>Distância:</strong> ${checkoutState.delivery.distanceKm.toFixed(1)} km</p>
-      <p><strong>Frete:</strong> R$ ${checkoutState.delivery.shippingCost.toFixed(2)}</p>
+      <p>${checkoutState.delivery.neighborhood || ''}, ${checkoutState.delivery.city || ''}/${checkoutState.delivery.state || ''}</p>
+      <p><strong>CEP:</strong> ${checkoutState.delivery.cep || ''}</p>
+      <p><strong>Distância:</strong> ${distText}</p>
+      <p><strong>Frete:</strong> ${freightText}</p>
     `;
   }
-  document.getElementById('review-delivery').innerHTML = deliveryHTML;
-  
+  const reviewDeliveryEl = document.getElementById('review-delivery');
+  if (reviewDeliveryEl) reviewDeliveryEl.innerHTML = deliveryHTML;
+
   // Valores
-  const shipping = checkoutState.delivery.shippingCost || 0;
-  const discount = checkoutState.coupon.discount || 0;
-  const total = checkoutState.subtotal + shipping - discount;
-  
-  document.getElementById('review-subtotal').textContent = `R$ ${checkoutState.subtotal.toFixed(2)}`;
-  document.getElementById('review-shipping').textContent = `R$ ${shipping.toFixed(2)}`;
-  document.getElementById('review-discount').textContent = discount > 0 ? `-R$ ${discount.toFixed(2)}` : 'R$ 0,00';
-  document.getElementById('review-total').textContent = `R$ ${total.toFixed(2)}`;
+  const shipping = (typeof checkoutState.delivery.shippingCost === 'number') ? checkoutState.delivery.shippingCost : 0;
+  const discount = Number(checkoutState.coupon.discount || 0);
+  const total = Number(checkoutState.subtotal || 0) + shipping - discount;
+
+  const elSub = document.getElementById('review-subtotal');
+  const elShip = document.getElementById('review-shipping');
+  const elDisc = document.getElementById('review-discount');
+  const elTot = document.getElementById('review-total');
+
+  if (elSub) elSub.textContent = `R$ ${Number(checkoutState.subtotal || 0).toFixed(2)}`;
+  if (elShip) elShip.textContent = (typeof checkoutState.delivery.shippingCost === 'number') ? `R$ ${checkoutState.delivery.shippingCost.toFixed(2)}` : '—';
+  if (elDisc) elDisc.textContent = discount > 0 ? `-R$ ${discount.toFixed(2)}` : 'R$ 0,00';
+  if (elTot) elTot.textContent = `R$ ${total.toFixed(2)}`;
 }
+
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -769,62 +895,116 @@ function updateInstallments() {
    ============================================ */
 async function applyCoupon() {
   const input = document.getElementById('coupon-input');
-  const code = input.value.trim().toUpperCase();
-  
+  const code = (input?.value || '').trim().toUpperCase();
+
   if (!code) {
     showToast('Digite um código de cupom', 'error');
     return;
   }
-  
+
   showLoading('Validando cupom...');
-  
+
   try {
-    const response = await fetch(API_CONFIG.WORKER_URL, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    action: 'validateCoupon',
-    payload: { code }
-  })
-});
-    
-    const data = await response.json();
-    
-    if (data.success && data.valid) {
-      checkoutState.coupon.code = code;
-      checkoutState.coupon.discount = data.discount || 0;
-      checkoutState.coupon.valid = true;
-      
-      updateTotals();
-      
-      const msgEl = document.getElementById('coupon-message');
-      msgEl.className = 'coupon-message success';
-      msgEl.textContent = `✅ Cupom aplicado! Desconto de R$ ${data.discount.toFixed(2)}`;
-      msgEl.style.display = 'block';
-      
-      showToast('Cupom aplicado!', 'success');
-    } else {
-      throw new Error(data.message || 'Cupom inválido');
+    // envia para o worker (assume que o worker chamará GAS)
+    const res = await fetch(API_CONFIG.WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'validateCoupon',
+        payload: { code }
+      })
+    });
+
+    const data = await res.json();
+    console.log('📥 Resposta validação cupom:', data);
+
+    // valida resposta
+    if (!data || data.success === false) {
+      const reason = (data && (data.error || data.message)) ? (data.error || data.message) : 'Cupom inválido';
+      throw new Error(reason);
     }
-    
+
+    // O campo retornado pode estar em várias chaves: desconto, discount, value, desc, etc.
+    // Normaliza para string para decidir
+    const raw = (data.desconto ?? data.discount ?? data.value ?? data.desc ?? data.type ?? '').toString().trim().toLowerCase();
+
+    // prepara estado do cupom
+    checkoutState.coupon = {
+      code,
+      type: null,
+      value: 0,
+      discount: 0,
+      valid: true
+    };
+
+    // CASE: frete grátis (aceita 'frete grátis' ou 'fretegratis' ou 'frete')
+    if (raw.includes('frete')) {
+      checkoutState.coupon.type = 'fretegratis';
+      checkoutState.coupon.value = 0;
+      checkoutState.coupon.discount = 0;
+      // aplica imediatamente
+      checkoutState.delivery.shippingCost = 0;
+    }
+    // CASE: percentual (ex: "10" ou "10%" ou "10,0")
+    else {
+      // extrai número (pode vir "10" ou "10%" ou "10,0")
+      const numStr = raw.replace('%', '').replace(',', '.').match(/-?\d+(\.\d+)?/);
+      if (numStr) {
+        const pct = parseFloat(numStr[0]);
+        if (!isNaN(pct) && pct > 0) {
+          checkoutState.coupon.type = 'percent';
+          checkoutState.coupon.value = pct;
+          // desconto monetário será calculado em updateTotals()
+        } else {
+          // sem número válido -> marca como válido, mas sem desconto
+          checkoutState.coupon.type = 'unknown';
+        }
+      } else {
+        // fallback: nenhuma informação de desconto, considera válido, sem desconto
+        checkoutState.coupon.type = 'unknown';
+      }
+    }
+
+    // recalcula totais (updateTotals aplica percent -> discount monetário)
+    updateTotals();
+
+    // mensagem para o usuário
+    const msgEl = document.getElementById('coupon-message');
+    if (msgEl) {
+      msgEl.className = 'coupon-message success';
+      if (checkoutState.coupon.type === 'fretegratis') {
+        msgEl.textContent = `✅ Cupom aplicado: frete grátis.`;
+      } else if (checkoutState.coupon.type === 'percent') {
+        msgEl.textContent = `✅ Cupom aplicado: ${checkoutState.coupon.value}% de desconto.`;
+      } else {
+        msgEl.textContent = `✅ Cupom aplicado.`;
+      }
+      msgEl.style.display = 'block';
+    }
+
+    showToast('Cupom aplicado!', 'success');
+
   } catch (error) {
     console.error('Erro ao validar cupom:', error);
-    
-    checkoutState.coupon.code = null;
-    checkoutState.coupon.discount = 0;
-    checkoutState.coupon.valid = false;
-    
+
+    // reset estado do cupom
+    checkoutState.coupon = { code: null, discount: 0, valid: false, type: null, value: 0 };
+
     const msgEl = document.getElementById('coupon-message');
-    msgEl.className = 'coupon-message error';
-    msgEl.textContent = `❌ ${error.message || 'Cupom inválido'}`;
-    msgEl.style.display = 'block';
-    
+    if (msgEl) {
+      msgEl.className = 'coupon-message error';
+      msgEl.textContent = `❌ ${error.message || 'Cupom inválido'}`;
+      msgEl.style.display = 'block';
+    }
+
     updateTotals();
     showToast(error.message || 'Cupom inválido', 'error');
   } finally {
     hideLoading();
   }
 }
+
+
 
 /* ============================================
    FINALIZAR PEDIDO
