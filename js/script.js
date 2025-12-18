@@ -221,7 +221,7 @@ function renderProducts() {
     const firstVariation = group.variations[0];
     
     // Caminho correto da imagem: /imagensprodutos/{nome_da_imagem}
-    const imagePath = firstVariation.imagem ? `/imagensprodutos/${firstVariation.imagem}` : '';
+    const imagePath = firstVariation.imagem ? `./imagensprodutos/${firstVariation.imagem}` : '';
     
     // Determinar o preço a mostrar
     let priceDisplay;
