@@ -8,7 +8,7 @@
 const API_CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbyLj62_6PDu1JAnqkVj9v7lwfyUJ7h_IyaT5eoyUyL4iHT9usGdgH2U9v3SQmDkhvByxA/exec',
   WORKER_URL: 'https://sublime.mcpemaster620.workers.dev/',
-  WHATSAPP_NUMBER: '5588988568911'
+  WHATSAPP_NUMBER: '5588000000000'
 };
 
 /* ============================================
@@ -31,19 +31,19 @@ const carouselData = [
   {
     title: 'Bem-vindo à Sublime',
     description: 'Produtos Tupperware de qualidade para seu dia a dia',
-    image: './imagenscarrossel/homesublime.png', 
+    image: '/imagenscarrossel/homesublime.png', 
     background: 'linear-gradient(135deg, #ff6fb5 0%, #c7aefc 100%)'
   },
   {
     title: 'Ofertas Especiais',
     description: 'Confira nossos produtos com desconto',
-    image: './imagenscarrossel/entregasublime.png', // Ajustado para pasta /Imagens/
+    image: '/imagenscarrossel/entregasublime.png', // Ajustado para pasta /Imagens/
     background: 'linear-gradient(135deg, #c7aefc 0%, #ff6fb5 100%)'
   },
   {
     title: 'Entrega Rápida',
     description: 'Receba seus produtos com segurança',
-    image: './imagenscarrossel/versatsublime.png', // Ajustado para pasta /Imagens/
+    image: '/imagenscarrossel/versatsublime.png', // Ajustado para pasta /Imagens/
     background: 'linear-gradient(135deg, #ff6fb5 20%, #0b2340 100%)'
   }
 ];
@@ -221,7 +221,7 @@ function renderProducts() {
     const firstVariation = group.variations[0];
     
     // Caminho correto da imagem: /imagensprodutos/{nome_da_imagem}
-    const imagePath = firstVariation.imagem ? `./imagensprodutos/${firstVariation.imagem}` : '';
+    const imagePath = firstVariation.imagem ? `/imagensprodutos/${firstVariation.imagem}` : '';
     
     // Determinar o preço a mostrar
     let priceDisplay;
@@ -278,7 +278,7 @@ function openVariationsModal(group) {
   
   const variationsHTML = group.variations.map(variation => {
     // Caminho correto da imagem: /imagensprodutos/{nome_da_imagem}
-    const imagePath = variation.imagem ? `../imagensprodutos/${variation.imagem}` : '';
+    const imagePath = variation.imagem ? `/imagensprodutos/${variation.imagem}` : '';
     
     return `
       <div class="variation-card">
