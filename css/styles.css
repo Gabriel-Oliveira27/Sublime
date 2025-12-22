@@ -907,6 +907,7 @@ input, select {
   color: var(--accent);
 }
 
+/* ========== INÍCIO: ESTILOS DOS ÍCONES SOCIAIS - COPIAR DAQUI ========== */
 .social-links {
   display: flex;
   gap: 1rem;
@@ -914,22 +915,27 @@ input, select {
 }
 
 .social-link {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
+  display: inline-block;
+  line-height: 0;
+  transition: transform 0.2s ease;
 }
 
-.social-link:hover {
-  background: var(--accent);
-  color: white;
-  transform: translateY(-3px);
+
+
+.social-link svg {
+  display: block;
+  width: 28px;
+  height: 28px;
 }
+
+
+@media (max-width: 768px) {
+  .social-link svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 
 .footer-bottom {
   max-width: 1400px;
