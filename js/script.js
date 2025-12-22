@@ -1,14 +1,8 @@
-/* ============================================
-   SCRIPT.JS - INDEX.HTML
-   ============================================ */
 
-/* ============================================
-   CONFIGURAÇÕES E CONSTANTES
-   ============================================ */
 const API_CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbyLj62_6PDu1JAnqkVj9v7lwfyUJ7h_IyaT5eoyUyL4iHT9usGdgH2U9v3SQmDkhvByxA/exec',
   WORKER_URL: 'https://sublime.mcpemaster620.workers.dev/',
-  WHATSAPP_NUMBER: '5588000000000'
+  WHATSAPP_NUMBER: '5588988568911'
 };
 
 /* ============================================
@@ -177,7 +171,7 @@ function groupProducts() {
       grouped[key] = {
         descricao: product.descricao,
         linha: product.linha,
-        litros: product.litros,
+        litros: product.Litros,
         variations: [],
         minPrice: Infinity,
         maxPrice: 0,
@@ -251,8 +245,8 @@ function renderProducts() {
         />
         <div class="product-name">${group.descricao}</div>
         <div class="product-details">
-          ${group.linha ? `<span>📦 ${group.linha}</span>` : ''}
-          ${group.litros ? `<span>💧 ${group.litros}</span>` : ''}
+          ${group.linha ? `<span> ${group.linha}</span>` : ''}
+          ${group.litros ? `<span> ${group.litros}</span>` : ''}
         </div>
         <div class="product-price">${priceDisplay}</div>
         <div class="product-stock">${group.totalStock} em estoque</div>
@@ -361,10 +355,18 @@ function addToCart(product) {
 }
 
 function removeFromCart(productId) {
-  appState.cart = appState.cart.filter(item => item.id !== productId);
+  appState.cart = appState.cart.filter(
+    item => String(item.id) !== String(productId)
+  );
+
   saveCart();
+  
+  updateCartBadge(); // ← IMPORTANTE
+  updateCartTotal(); // ← IMPORTANTE
+
   showToast('Produto removido do carrinho', 'success');
 }
+
 
 function updateQuantity(productId, delta) {
   const item = appState.cart.find(item => item.id === productId);
@@ -402,13 +404,17 @@ function updateCartUI() {
     cartItems.innerHTML = '<div class="cart-empty"><p>Seu carrinho está vazio</p></div>';
     checkoutBtn.disabled = true;
   } else {
-    const itemsHTML = appState.cart.map(item => `
+    const itemsHTML = appState.cart.map(item => {
+      // Usar o mesmo caminho de imagem dos cards: ./imagensprodutos/{nome_da_imagem}
+      const imagePath = item.imagem ? `./imagensprodutos/${item.imagem}` : '';
+      
+      return `
       <div class="cart-item">
         <img 
-          src="${item.imagem || 'https://via.placeholder.com/80x80?text=Sem+Imagem'}" 
+          src="${imagePath}" 
           alt="${item.descricao}" 
           class="cart-item-image"
-          onerror="this.src='https://via.placeholder.com/80x80?text=Sem+Imagem'"
+          onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22 viewBox=%220 0 80 80%22%3E%3Crect fill=%22%23f0f0f0%22 width=%2280%22 height=%2280%22/%3E%3Cpath fill=%22%23999%22 d=%22M40 20c-11 0-20 9-20 20s9 20 20 20 20-9 20-20-9-20-20-20zm0 34c-7.7 0-14-6.3-14-14s6.3-14 14-14 14 6.3 14 14-6.3 14-14 14z%22/%3E%3Ccircle fill=%22%23999%22 cx=%2240%22 cy=%2240%22 r=%226%22/%3E%3C/svg%3E';"
         />
         <div class="cart-item-details">
           <div class="cart-item-name">${item.descricao}</div>
@@ -422,7 +428,8 @@ function updateCartUI() {
           <button class="cart-item-remove" onclick="removeFromCart('${item.id}')">Remover</button>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
     
     cartItems.innerHTML = itemsHTML;
     checkoutBtn.disabled = false;
@@ -459,7 +466,7 @@ function populateFilters() {
   
   // Obter valores únicos
   const linhas = [...new Set(appState.products.map(p => p.linha).filter(Boolean))];
-  const litros = [...new Set(appState.products.map(p => p.litros).filter(Boolean))];
+  const litros = [...new Set(appState.products.map(p => p.Litros).filter(Boolean))];
   
   // Preencher select de linhas
   linhas.forEach(linha => {
