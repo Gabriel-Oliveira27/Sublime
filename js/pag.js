@@ -9,7 +9,7 @@
 const API_CONFIG = {
   WORKER_URL: 'https://sublime.mcpemaster620.workers.dev/',
   GAS_URL: 'https://script.google.com/macros/s/AKfycbyLj62_6PDu1JAnqkVj9v7lwfyUJ7h_IyaT5eoyUyL4iHT9usGdgH2U9v3SQmDkhvByxA/exec',
-  WHATSAPP_NUMBER: '5588000000000',
+  WHATSAPP_NUMBER: '5588988568911',
   ORIGIN_ADDRESS: {
     street: 'Rua Itacy Rodovalho de Alencar, 110',
     neighborhood: 'Veneza',
@@ -100,7 +100,7 @@ function loadCart() {
     const savedCart = localStorage.getItem('sublime_cart');
     if (!savedCart || savedCart === '[]') {
       showToast('Carrinho vazio. Redirecionando...', 'error');
-      setTimeout(() => window.location.href = 'index.html', 2000);
+      setTimeout(() => window.location.href = '../index.html', 2000);
       return;
     }
     
@@ -110,7 +110,7 @@ function loadCart() {
   } catch (error) {
     console.error('Erro ao carregar carrinho:', error);
     showToast('Erro ao carregar carrinho', 'error');
-    setTimeout(() => window.location.href = 'index.html', 2000);
+    setTimeout(() => window.location.href = '../index.html', 2000);
   }
 }
 
@@ -162,7 +162,14 @@ function updateTotals() {
 
   // Determina frete, respeitando cupom de frete grátis
   let shippingRaw = checkoutState.delivery.shippingCost;
-  let shipping = (typeof shippingRaw === 'number' && !isNaN(shippingRaw)) ? shippingRaw : null;
+  let shipping = null;
+  
+  // Se o frete for 'pending', significa que é outra cidade
+  if (shippingRaw === 'pending') {
+    shipping = 'pending';
+  } else if (typeof shippingRaw === 'number' && !isNaN(shippingRaw)) {
+    shipping = shippingRaw;
+  }
 
   // aceitar dois nomes possíveis para o tipo de frete grátis
   if (checkoutState.coupon && (checkoutState.coupon.type === 'fretegratis' || checkoutState.coupon.type === 'free_shipping')) {
@@ -171,7 +178,8 @@ function updateTotals() {
   }
 
   // calcula total final
-  const total = +(subtotal - (discountValue || 0) + (shipping || 0)).toFixed(2);
+  const shippingValue = (shipping === 'pending') ? 0 : (shipping || 0);
+  const total = +(subtotal - (discountValue || 0) + shippingValue).toFixed(2);
 
   checkoutState.total = total;
 
@@ -186,6 +194,8 @@ function updateTotals() {
   let shippingText;
   if (checkoutState.delivery.type === 'retirada') {
     shippingText = 'Grátis';
+  } else if (shipping === 'pending') {
+    shippingText = 'A definir';
   } else {
     shippingText = (shipping !== null) ? `R$ ${shipping.toFixed(2)}` : 'Calcular';
   }
@@ -321,6 +331,16 @@ function goToStep(stepNumber) {
 
 function prepareStep(stepNumber) {
   if (stepNumber === 3) {
+    // Calcular frete automaticamente ao entrar na etapa 3
+    if (checkoutState.delivery.type === 'entrega' && checkoutState.delivery.city) {
+      const shippingResult = calculateShippingCost(
+        checkoutState.subtotal || 0, 
+        null, 
+        checkoutState.delivery.city
+      );
+      checkoutState.delivery.shippingCost = shippingResult.cost;
+      updateTotals();
+    }
     renderReviewStep();
   } else if (stepNumber === 4) {
     updateInstallmentOptions();
@@ -432,11 +452,7 @@ function validateStep2() {
       return false;
     }
     
-    if (checkoutState.subtotal > 99 && checkoutState.subtotal <= 350 && (checkoutState.delivery.shippingCost === null || checkoutState.delivery.shippingCost === undefined)) {
-  showToast('Calcule o frete antes de continuar', 'error');
-  return false;
-}
-
+    // Remover validação de frete - será calculado automaticamente na etapa 3
     
     return true;
   }
@@ -728,39 +744,29 @@ function calculateShippingCost(subtotal, distanceKm, city) {
   let cost = 0;
   let note = '';
   
-  // REGRA 1: Subtotal <= 99 → GRÁTIS
-  if (subtotal <= 99) {
-    cost = 0;
-    note = '🎉 Frete grátis para compras até R$ 99,00!';
-  }
-  // REGRA 2: Subtotal > 350 → R$ 10,00
-  else if (subtotal > 350) {
-    cost = 10.00;
-    note = '✨ Frete fixo de R$ 10,00 para compras acima de R$ 350,00!';
-  }
-  // REGRA 3: Calcular por distância
-  else {
-    // Verificar se é outra cidade
-    const originCity = API_CONFIG.ORIGIN_ADDRESS.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const destCity = city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    
-    if (originCity !== destCity) {
-      cost = 15.00;
-      note = '⚠️ Entrega para outra cidade. Pode sofrer variação conforme localidade. Consulte a atendente se necessário.';
-    } else {
-      // Faixas de distância
-      if (distanceKm < 2.0) {
-        cost = 0.00;
-      } else if (distanceKm < 4.0) {
-        cost = 3.50;
-      } else if (distanceKm <= 6.0) {
-        cost = 7.00;
-      } else if (distanceKm < 10.0) {
-        cost = 10.00;
-      } else {
-        cost = 15.00;
-        note = '⚠️ Distância superior a 10 km. Pode sofrer variação. Consulte a atendente se necessário.';
-      }
+  // Verificar se é cidade diferente de Iguatu
+  const originCity = API_CONFIG.ORIGIN_ADDRESS.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const destCity = (city || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  if (originCity !== destCity) {
+    // Outra cidade: Exibir mensagem, sem valor numérico de frete
+    cost = 'pending'; // Marcador especial
+    note = '⚠️ O envio será preparado junto do vendedor, o valor do frete será comunicado posteriormente.';
+  } else {
+    // Mesma cidade (Iguatu): Calcular por valor do pedido
+    if (subtotal >= 1 && subtotal <= 129) {
+      cost = 0;
+      note = '🎉 Frete grátis para compras até R$ 129,00!';
+    } else if (subtotal >= 130 && subtotal <= 200) {
+      cost = 1.50;
+    } else if (subtotal >= 201 && subtotal <= 270) {
+      cost = 3.00;
+    } else if (subtotal >= 271 && subtotal <= 349) {
+      cost = 5.00;
+    } else if (subtotal >= 350 && subtotal <= 419) {
+      cost = 7.00;
+    } else if (subtotal >= 420) {
+      cost = 10.00;
     }
   }
   
@@ -1012,10 +1018,7 @@ async function applyCoupon() {
 async function finishOrder() {
   if (!validateStep4()) return;
   
-  // Confirmar com usuário
-  if (!confirm('Confirma a reserva do pedido?')) {
-    return;
-  }
+  // Remover alert de confirmação - chamar diretamente
   
   showLoading('Reservando seus produtos...');
   
@@ -1118,10 +1121,8 @@ async function finishOrder() {
       
       hideLoading();
       
-      alert(`✅ Pedido reservado com sucesso!\n\n📦 Código de rastreio: ${orderId}\n\nAnote este código para acompanhar seu pedido.`);
-      
-      // Redirecionar
-      window.location.href = `checharpedido.html?order=${orderId}`;
+      // Mostrar popup customizado ao invés de alert
+      showSuccessPopup(orderId);
       
     } else {
       throw new Error(result.error || result.message || 'Erro ao processar pedido');
@@ -1144,6 +1145,193 @@ async function finishOrder() {
     alert('❌ ' + errorMsg);
     showToast(error.message || 'Erro ao processar pedido', 'error');
   }
+}
+
+/* ============================================
+   POPUP DE SUCESSO CUSTOMIZADO
+   ============================================ */
+function showSuccessPopup(orderId) {
+  const paymentMethod = checkoutState.payment.method;
+  const deliveryType = checkoutState.delivery.type;
+  
+  // Formatar data e hora para retirada
+  let dateTimeText = '';
+  if (deliveryType === 'retirada') {
+    const dateStr = checkoutState.delivery.pickupDate;
+    const timeStr = checkoutState.delivery.pickupTime;
+    if (dateStr) {
+      const [year, month, day] = dateStr.split('-');
+      dateTimeText = `${timeStr || ''} do dia ${day}/${month}/${year}`;
+    }
+  }
+  
+  // Determinar mensagem baseada em pagamento + entrega
+  let message = '';
+  let showPixButton = false;
+  let showWhatsAppButton = false;
+  
+  // RETIRADA
+  if (deliveryType === 'retirada') {
+    if (paymentMethod === 'Dinheiro') {
+      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguardamos você às <strong>${dateTimeText}</strong>.`;
+    } else if (paymentMethod === 'PIX') {
+      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguarde o contato do vendedor caso queira o PIX copia e cola, caso contrário copie a chave abaixo e envie o comprovante pelo WhatsApp do vendedor(a).<br><br>Retirada às <strong>${dateTimeText}</strong>.`;
+      showPixButton = true;
+    } else if (paymentMethod === 'Credito') {
+      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguarde o link para pagamento que o vendedor irá te enviar para prosseguir com a retirada, ou se preferir pague quando vir retirar.<br><br>Retirada às <strong>${dateTimeText}</strong>.`;
+    }
+  }
+  // ENTREGA
+  else {
+    if (paymentMethod === 'Dinheiro') {
+      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Agora é só esperar a entrega! O prazo é de até <strong>2 dias</strong> para receber seu pedido.<br><br>Para mais informações clique no botão abaixo para entrar em contato com o vendedor(a):`;
+      showWhatsAppButton = true;
+    } else if (paymentMethod === 'PIX') {
+      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Agora é só esperar a entrega! A aprovação da entrega será realizada assim que o seu PIX for confirmado no nosso sistema, o prazo é de <strong>2 dias</strong>.<br><br>Se quiser adiantar, copie a chave PIX abaixo e envie o comprovante pelo WhatsApp do vendedor:`;
+      showPixButton = true;
+    } else if (paymentMethod === 'Credito') {
+      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguarde o contato do vendedor(a), você receberá o link de pagamento on-line, depois disso é só aguardar seu pedido.<br><br>O prazo de entrega é <strong>2 dias</strong> depois da aprovação do pagamento.`;
+    }
+  }
+  
+  // Criar popup
+  const popup = document.createElement('div');
+  popup.id = 'success-popup-overlay';
+  popup.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  `;
+  
+  const popupContent = document.createElement('div');
+  popupContent.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    position: relative;
+  `;
+  
+  // SVG do ícone de check (círculo com check)
+  const checkIconSVG = `
+    <svg width="80" height="80" viewBox="0 0 80 80" style="margin-bottom: 20px;">
+      <circle cx="40" cy="40" r="38" fill="none" stroke="#000" stroke-width="4"/>
+      <path d="M25 40 L35 50 L55 30" fill="none" stroke="#4fd1c5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  
+  let buttonsHTML = '';
+  
+  if (showPixButton) {
+    buttonsHTML += `
+      <button onclick="copyPixKey()" style="
+        background: #ff6fb5;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 10px 5px;
+        transition: background 0.3s;
+      " onmouseover="this.style.background='#e55a9f'" onmouseout="this.style.background='#ff6fb5'">
+        📋 Copiar chave PIX
+      </button>
+    `;
+  }
+  
+  if (showWhatsAppButton) {
+    const whatsappMsg = encodeURIComponent(`Olá! Queria falar sobre o pedido PC-${orderId}`);
+    const whatsappUrl = `https://wa.me/${API_CONFIG.WHATSAPP_NUMBER}?text=${whatsappMsg}`;
+    buttonsHTML += `
+      <a href="${whatsappUrl}" target="_blank" style="
+        display: inline-block;
+        background: #25D366;
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        margin: 10px 5px;
+        transition: background 0.3s;
+      " onmouseover="this.style.background='#1fb854'" onmouseout="this.style.background='#25D366'">
+        💬 Falar com vendedor
+      </a>
+    `;
+  }
+  
+  popupContent.innerHTML = `
+    ${checkIconSVG}
+    <div style="font-size: 18px; line-height: 1.6; color: #333; margin-bottom: 20px;">
+      ${message}
+    </div>
+    <div style="margin-top: 20px;">
+      ${buttonsHTML}
+      <button onclick="closeSuccessPopup()" style="
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 10px 5px;
+        transition: background 0.3s;
+      " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
+        Fechar
+      </button>
+    </div>
+  `;
+  
+  popup.appendChild(popupContent);
+  document.body.appendChild(popup);
+}
+
+function closeSuccessPopup() {
+  const popup = document.getElementById('success-popup-overlay');
+  if (popup) {
+    popup.remove();
+  }
+  // Redirecionar para página inicial após fechar
+  setTimeout(() => {
+    window.location.href = '../index.html';
+  }, 3000);
+  
+}
+
+function copyPixKey() {
+  const pixKey = 'c7172483-c032-4694-86cd-eebec564c848';
+  
+  // Copiar para área de transferência
+  navigator.clipboard.writeText(pixKey).then(() => {
+    showToast('✅ Chave PIX copiada para a área de transferência!', 'success');
+  }).catch(err => {
+    // Fallback para navegadores antigos
+    const textarea = document.createElement('textarea');
+    textarea.value = pixKey;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      showToast('✅ Chave PIX copiada para a área de transferência!', 'success');
+    } catch (e) {
+      showToast('❌ Erro ao copiar chave PIX', 'error');
+    }
+    document.body.removeChild(textarea);
+  });
 }
 
 /* ============================================
