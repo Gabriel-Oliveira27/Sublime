@@ -280,7 +280,7 @@ function maskCEP(input) {
 /* ============================================
    NAVEGAÇÃO ENTRE ETAPAS
    ============================================ */
-function nextStep() {
+async function nextStep() {
   const currentStep = checkoutState.currentStep;
   
   // Validar etapa atual antes de avançar
@@ -288,8 +288,30 @@ function nextStep() {
     return;
   }
   
-  // Salvar dados da etapa atual
+  // Salvar dados da etapa atual (importante antes de calcular frete)
   saveStepData(currentStep);
+
+  // Se estivermos no passo 2 e for entrega, tentar calcular frete se ainda não calculado
+  if (currentStep === 2 && checkoutState.delivery.type === 'entrega') {
+    const shippingRaw = checkoutState.delivery.shippingCost;
+    const shippingNotCalculated = (shippingRaw === null || shippingRaw === undefined || shippingRaw === 'pending');
+
+    if (shippingNotCalculated) {
+      try {
+        showLoading('Calculando frete antes de seguir...');
+        // calculateShipping é async e atualiza checkoutState.delivery
+        await calculateShipping();
+        // se quiser bloquear a passagem caso frete ainda esteja pendente, você pode descomentar:
+        // if (checkoutState.delivery.shippingCost === 'pending') { showToast('Não foi possível calcular o frete agora', 'warning'); return; }
+      } catch (err) {
+        console.warn('Erro ao calcular frete ao avançar:', err);
+        // não interrompe o fluxo, pois prepareStep também tenta calcular
+        showToast('Não foi possível calcular o frete agora — você pode revisar na próxima etapa.', 'warning');
+      } finally {
+        hideLoading();
+      }
+    }
+  }
   
   // Avançar para próxima etapa
   if (currentStep < 4) {
