@@ -1,14 +1,6 @@
-/* ============================================
-   PAG.JS - CHECKOUT SUBLIME
-   Sistema de 4 etapas sequenciais
-   ============================================ */
-
-/* ============================================
-   CONFIGURAÇÕES
-   ============================================ */
 const API_CONFIG = {
   WORKER_URL: 'https://sublime.mcpemaster620.workers.dev/',
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbyLj62_6PDu1JAnqkVj9v7lwfyUJ7h_IyaT5eoyUyL4iHT9usGdgH2U9v3SQmDkhvByxA/exec',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbwHD93akrVoxp2XjjCqZlY7RCG3ydk4Wctv5ETOR80y0qrJv-6f0hw80T9JrLDXpgqa/exec',
   WHATSAPP_NUMBER: '5588988568911',
   ORIGIN_ADDRESS: {
     street: 'Rua Itacy Rodovalho de Alencar, 110',
@@ -38,6 +30,37 @@ const INSTALLMENT_FEES = {
 };
 
 /* ============================================
+   HELPERS ADICIONADOS
+   ============================================ */
+// parseCurrency: aceita "R$ 1.234,56", "1234,56", "1234.56", "500" -> retorna Number 1234.56
+function parseCurrency(value) {
+  if (value === null || value === undefined) return 0;
+  let s = String(value).trim();
+  s = s.replace(/[R$\s]/g, '');
+  const hasComma = s.indexOf(',') !== -1;
+  const hasDot = s.indexOf('.') !== -1;
+  if (hasComma && hasDot) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (hasComma && !hasDot) {
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+// ---------- ADD: normaliza método para enviar ao Worker/GAS ----------
+function normalizeMethodForWorker(method) {
+  if (!method) return '';
+  const m = String(method).toLowerCase();
+  if (m.includes('cred')) return 'credito';
+  if (m.includes('dinheiro') || m === 'dinheiro') return 'dinheiro';
+  if (m.includes('pix')) return 'pix';
+  if (m.includes('cartao') || m.includes('cartão') || m.includes('credito')) return 'credito';
+  return m;
+}
+
+
+/* ============================================
    ESTADO DO CHECKOUT
    ============================================ */
 let checkoutState = {
@@ -46,7 +69,7 @@ let checkoutState = {
   customer: {
     name: '',
     phone: '',
-    cpf: ''
+    
   },
   delivery: {
     type: '', // 'retirada' ou 'entrega'
@@ -93,6 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Geocodificar endereço de origem (para cálculo de distância)
   geocodeOrigin();
+
+  // Gatilho quando usuário muda parcelas
+  document.getElementById('installments')?.addEventListener('change', () => {
+    updateInstallments();
+  });
 });
 
 function loadCart() {
@@ -156,15 +184,15 @@ function updateTotals() {
       discountValue = Number(checkoutState.coupon.discount || 0);
     }
   } else {
-    // se não for percent, pode já ter um valor monetário
+
     discountValue = Number(checkoutState.coupon.discount || 0);
   }
 
-  // Determina frete, respeitando cupom de frete grátis
+
   let shippingRaw = checkoutState.delivery.shippingCost;
   let shipping = null;
   
-  // Se o frete for 'pending', significa que é outra cidade
+
   if (shippingRaw === 'pending') {
     shipping = 'pending';
   } else if (typeof shippingRaw === 'number' && !isNaN(shippingRaw)) {
@@ -202,7 +230,21 @@ function updateTotals() {
   if (elShipping) elShipping.textContent = shippingText;
 
   if (elDiscount) elDiscount.textContent = (discountValue && discountValue > 0) ? `-R$ ${discountValue.toFixed(2)}` : 'R$ 0,00';
-  if (elTotal) elTotal.textContent = `R$ ${total.toFixed(2)}`;
+
+  // se pagamento atual é Crédito e já escolheu parcelas, mostrar total com juros no summary
+  const summaryTotalEl = document.getElementById('summary-total');
+  if (summaryTotalEl) {
+    if (checkoutState.payment.method === 'Credito') {
+      const installments = Number(checkoutState.payment.installments || 1);
+      const fee = INSTALLMENT_FEES[installments] || 0;
+      const totalWithFee = +(total * (1 + fee));
+      summaryTotalEl.textContent = `R$ ${totalWithFee.toFixed(2)}`;
+    } else {
+      summaryTotalEl.textContent = `R$ ${total.toFixed(2)}`;
+    }
+  }
+
+  
 }
 
 
@@ -212,11 +254,9 @@ function updateTotals() {
    ============================================ */
 function initMasks() {
   const phoneInput = document.getElementById('customer-phone');
-  const cpfInput = document.getElementById('customer-cpf');
   const cepInputs = [document.getElementById('delivery-cep')];
   
   if (phoneInput) phoneInput.addEventListener('input', (e) => maskPhone(e.target));
-  if (cpfInput) cpfInput.addEventListener('input', (e) => maskCPF(e.target));
   cepInputs.forEach(input => {
     if (input) input.addEventListener('input', (e) => maskCEP(e.target));
   });
@@ -229,50 +269,12 @@ function maskPhone(input) {
   input.value = value.substr(0, 15);
 }
 
-function maskCPF(input) {
-  let value = input.value.replace(/\D/g, '');
-  value = value.replace(/(\d{3})(\d)/, '$1.$2');
-  value = value.replace(/(\d{3})(\d)/, '$1.$2');
-  value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-  input.value = value.substr(0, 14);
-}
+
 
 function maskCEP(input) {
   let value = input.value.replace(/\D/g, '');
   value = value.replace(/^(\d{5})(\d)/, '$1-$2');
   input.value = value.substr(0, 9);
-}
-
-/* ============================================
-   VALIDAÇÃO DE CPF (ALGORITMO OFICIAL)
-   ============================================ */
-function validateCPF(cpf) {
-  cpf = cpf.replace(/\D/g, '');
-  
-  if (cpf.length !== 11) return false;
-  if (/^(\d)\1{10}$/.test(cpf)) return false; // CPF com todos dígitos iguais
-  
-  // Validar primeiro dígito verificador
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(cpf.charAt(i)) * (10 - i);
-  }
-  let digit1 = 11 - (sum % 11);
-  if (digit1 >= 10) digit1 = 0;
-  
-  if (parseInt(cpf.charAt(9)) !== digit1) return false;
-  
-  // Validar segundo dígito verificador
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(cpf.charAt(i)) * (11 - i);
-  }
-  let digit2 = 11 - (sum % 11);
-  if (digit2 >= 10) digit2 = 0;
-  
-  if (parseInt(cpf.charAt(10)) !== digit2) return false;
-  
-  return true;
 }
 
 /* ============================================
@@ -331,18 +333,27 @@ function goToStep(stepNumber) {
 
 function prepareStep(stepNumber) {
   if (stepNumber === 3) {
-    // Calcular frete automaticamente ao entrar na etapa 3
-    if (checkoutState.delivery.type === 'entrega' && checkoutState.delivery.city) {
-      const shippingResult = calculateShippingCost(
-        checkoutState.subtotal || 0, 
-        null, 
+
+    if (checkoutState.delivery.type === 'entrega') {
+      const { cost, note } = calculateShippingCost(
+        checkoutState.subtotal,
+        checkoutState.delivery.distanceKm,
         checkoutState.delivery.city
       );
-      checkoutState.delivery.shippingCost = shippingResult.cost;
-      updateTotals();
+
+      checkoutState.delivery.shippingCost = cost;
+      checkoutState.delivery.shippingNote = note;
+    } else {
+      checkoutState.delivery.shippingCost = 0;
     }
+
+    updateTotals();
     renderReviewStep();
-  } else if (stepNumber === 4) {
+  }
+
+   if (stepNumber === 4) {
+    // garante que total/frete/cupom estejam atualizados antes de gerar opções de parcelamento
+    updateTotals();
     updateInstallmentOptions();
   }
 }
@@ -369,7 +380,6 @@ function validateStep(stepNumber) {
 function validateStep1() {
   const name = document.getElementById('customer-name').value.trim();
   const phone = document.getElementById('customer-phone').value.trim();
-  const cpf = document.getElementById('customer-cpf').value.trim();
   
   clearErrors();
   
@@ -385,18 +395,6 @@ function validateStep1() {
     return false;
   }
   
-  if (!cpf) {
-    showError('error-cpf', 'Digite seu CPF');
-    document.getElementById('customer-cpf').focus();
-    return false;
-  }
-  
-  if (!validateCPF(cpf)) {
-    showError('error-cpf', 'CPF inválido. Verifique os dígitos');
-    document.getElementById('customer-cpf').focus();
-    showToast('CPF inválido', 'error');
-    return false;
-  }
   
   return true;
 }
@@ -464,6 +462,21 @@ function validateStep4() {
     showToast('Selecione uma forma de pagamento', 'error');
     return false;
   }
+
+  // Se for Dinheiro e foi informado troco, validar troco >= total
+  if (checkoutState.payment.method === 'Dinheiro') {
+    const changeInput = document.getElementById('change-for');
+    if (changeInput) {
+      const given = parseCurrency(changeInput.value);
+      if (given > 0) {
+        const baseTotal = Number(checkoutState.total || 0);
+        if (given < baseTotal) {
+          showToast('Valor de troco insuficiente — informe um valor maior ou remova o troco.', 'error');
+          return false;
+        }
+      }
+    }
+  }
   
   return true;
 }
@@ -484,7 +497,6 @@ function saveStepData(stepNumber) {
   if (stepNumber === 1) {
     checkoutState.customer.name = document.getElementById('customer-name').value.trim();
     checkoutState.customer.phone = document.getElementById('customer-phone').value.trim();
-    checkoutState.customer.cpf = document.getElementById('customer-cpf').value.trim();
   } else if (stepNumber === 2) {
     if (checkoutState.delivery.type === 'retirada') {
       checkoutState.delivery.pickupWho = document.getElementById('pickup-who').value.trim();
@@ -567,9 +579,7 @@ async function searchCEP() {
 
     showToast('CEP encontrado!', 'success');
 
-    // Tenta calcular o frete automaticamente (usa geocoding + fallback)
-    await calculateShipping();
-
+   
   } catch (error) {
     console.error('Erro ao buscar CEP:', error);
     showToast('CEP não encontrado', 'error');
@@ -719,9 +729,7 @@ async function calculateShipping() {
 }
 
 
-/* ============================================
-   HAVERSINE (Distância geodésica)
-   ============================================ */
+
 function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Raio da Terra em km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -741,37 +749,48 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
    REGRAS DE FRETE
    ============================================ */
 function calculateShippingCost(subtotal, distanceKm, city) {
+
+  // 🔒 Blindagem: distância ainda não calculada
+  if (distanceKm === null || distanceKm === undefined || isNaN(distanceKm)) {
+    return {
+      cost: 'pending',
+      note: '⚠️ Distância ainda não calculada. Aguarde a confirmação do endereço.'
+    };
+  }
+
   let cost = 0;
   let note = '';
-  
-  // Verificar se é cidade diferente de Iguatu
-  const originCity = API_CONFIG.ORIGIN_ADDRESS.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const destCity = (city || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
+
+  const originCity = API_CONFIG.ORIGIN_ADDRESS.city
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  const destCity = (city || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
   if (originCity !== destCity) {
-    // Outra cidade: Exibir mensagem, sem valor numérico de frete
-    cost = 'pending'; // Marcador especial
-    note = '⚠️ O envio será preparado junto do vendedor, o valor do frete será comunicado posteriormente.';
-  } else {
-    // Mesma cidade (Iguatu): Calcular por valor do pedido
-    if (subtotal >= 1 && subtotal <= 129) {
-      cost = 0;
-      note = '🎉 Frete grátis para compras até R$ 129,00!';
-    } else if (subtotal >= 130 && subtotal <= 200) {
-      cost = 1.50;
-    } else if (subtotal >= 201 && subtotal <= 270) {
-      cost = 3.00;
-    } else if (subtotal >= 271 && subtotal <= 349) {
-      cost = 5.00;
-    } else if (subtotal >= 350 && subtotal <= 419) {
-      cost = 7.00;
-    } else if (subtotal >= 420) {
-      cost = 10.00;
-    }
+    return {
+      cost: 'pending',
+      note: '⚠️ O envio será preparado junto do vendedor.'
+    };
   }
-  
+
+  // Iguatu — frete por valor do pedido
+  if (subtotal <= 129) {
+    cost = 0;
+    note = '🎉 Frete grátis!';
+  } else if (subtotal <= 200) cost = 1.50;
+  else if (subtotal <= 270) cost = 3.00;
+  else if (subtotal <= 349) cost = 5.00;
+  else if (subtotal <= 419) cost = 7.00;
+  else cost = 10.00;
+
   return { cost, note };
 }
+
 
 /* ============================================
    ETAPA 3: REVISÃO
@@ -808,8 +827,6 @@ function renderReviewStep() {
       <p><strong>Endereço:</strong> ${checkoutState.delivery.street || ''}, ${checkoutState.delivery.number || ''}</p>
       ${checkoutState.delivery.complement ? `<p><strong>Complemento:</strong> ${checkoutState.delivery.complement}</p>` : ''}
       <p>${checkoutState.delivery.neighborhood || ''}, ${checkoutState.delivery.city || ''}/${checkoutState.delivery.state || ''}</p>
-      <p><strong>CEP:</strong> ${checkoutState.delivery.cep || ''}</p>
-      <p><strong>Distância:</strong> ${distText}</p>
       <p><strong>Frete:</strong> ${freightText}</p>
     `;
   }
@@ -858,42 +875,82 @@ function selectPaymentMethod(method) {
   // Se for crédito, atualizar parcelas
   if (method === 'Credito') {
     updateInstallmentOptions();
+  } else {
+    // se não for crédito, garantir que summary mostra total base
+    updateInstallments();
   }
 }
 
 function updateInstallmentOptions() {
   const select = document.getElementById('installments');
   if (!select) return;
-  
-  const baseTotal = checkoutState.total;
-  
+
+  const baseTotal = Number(checkoutState.total) || 0;
+
+  // limpar opções antigas
+  select.innerHTML = '';
+
+  // sempre gerar 12 opções (1..12) — se baseTotal for 0, mostramos 1x com zeros
   for (let i = 1; i <= 12; i++) {
-    const fee = INSTALLMENT_FEES[i];
-    const totalWithFee = baseTotal * (1 + fee);
-    const installmentValue = totalWithFee / i;
-    
-    const option = select.options[i - 1];
-    if (option) {
-      option.textContent = i === 1 
-        ? `1x sem juros - R$ ${baseTotal.toFixed(2)}`
-        : `${i}x de R$ ${installmentValue.toFixed(2)}`;
-      option.value = i;
-    }
+    const fee = INSTALLMENT_FEES[i] || 0;
+    const totalWithFee = +(baseTotal * (1 + fee));
+    const installmentValue = (i > 0) ? (totalWithFee / i) : totalWithFee;
+
+    const option = document.createElement('option');
+    option.value = i;
+    // se baseTotal = 0, evita NaN e exibe 0,00
+    option.textContent = baseTotal > 0
+      ? `${i}x de R$ ${installmentValue.toFixed(2)} (Total R$ ${totalWithFee.toFixed(2)})`
+      : `${i}x de R$ 0,00 (Total R$ 0,00)`;
+
+    option.dataset.total = totalWithFee.toFixed(2);
+    select.appendChild(option);
   }
-  
+
+  // manter seleção atual (ou 1 se inválida)
+  const current = parseInt(select.dataset.selected || select.value) || 1;
+  select.value = (current >= 1 && current <= 12) ? String(current) : '1';
+
+  // atualizar estado e UI
   updateInstallments();
 }
+
+
+function getTotalWithInstallments() {
+  if (checkoutState.payment.method !== 'Credito') {
+    return checkoutState.total;
+  }
+  const fee = INSTALLMENT_FEES[checkoutState.payment.installments] || 0;
+  return +(checkoutState.total * (1 + fee)).toFixed(2);
+}
+
+
 
 function updateInstallments() {
   const installments = parseInt(document.getElementById('installments').value) || 1;
   checkoutState.payment.installments = installments;
   
-  const baseTotal = checkoutState.total;
-  const fee = INSTALLMENT_FEES[installments];
+  const baseTotal = Number(checkoutState.total || 0);
+  const fee = INSTALLMENT_FEES[installments] || 0;
   const totalWithFee = baseTotal * (1 + fee);
   
-  document.getElementById('value-no-fee').textContent = `R$ ${baseTotal.toFixed(2)}`;
-  document.getElementById('value-with-fee').textContent = `R$ ${totalWithFee.toFixed(2)}`;
+  const valueNoFeeEl = document.getElementById('value-no-fee');
+  const valueWithFeeEl = document.getElementById('value-with-fee');
+  if (valueNoFeeEl) valueNoFeeEl.textContent = `R$ ${baseTotal.toFixed(2)}`;
+  if (valueWithFeeEl) valueWithFeeEl.textContent = `R$ ${totalWithFee.toFixed(2)}`;
+
+  // Atualiza também o summary-total (conforme o pedido)
+  const summaryTotalEl = document.getElementById('summary-total');
+  if (summaryTotalEl) {
+    if (checkoutState.payment.method === 'Credito') {
+      summaryTotalEl.textContent = `R$ ${totalWithFee.toFixed(2)}`;
+    } else {
+      summaryTotalEl.textContent = `R$ ${baseTotal.toFixed(2)}`;
+    }
+  }
+
+  // Atualiza a revisão
+  renderReviewStep();
 }
 
 /* ============================================
@@ -1025,8 +1082,8 @@ async function finishOrder() {
   // Desabilitar botão
   const btnText = document.getElementById('btn-finish-text');
   const btnSpinner = document.getElementById('btn-finish-spinner');
-  btnText.style.display = 'none';
-  btnSpinner.style.display = 'inline-block';
+  if (btnText) btnText.style.display = 'none';
+  if (btnSpinner) btnSpinner.style.display = 'inline-block';
   
   try {
     // Preparar items
@@ -1043,13 +1100,40 @@ async function finishOrder() {
     };
     
     if (checkoutState.delivery.type === 'retirada') {
-      delivery.address = 'Retirada no local';
+      // montar endereço com data/hora quando houver
+      const dateStr = checkoutState.delivery.pickupDate;
+      const timeStr = checkoutState.delivery.pickupTime;
+      let pickupText = 'Retirada no local';
+      if (dateStr) {
+        const [y, m, d] = dateStr.split('-');
+        pickupText += ` - ${d}/${m}/${y}`;
+      }
+      if (timeStr) {
+        pickupText += ` às ${timeStr}`;
+      }
+
+      // checar troco (se houver)
+      let changeRequested = null;
+      const changeInput = document.getElementById('change-for');
+      if (changeInput) {
+        const given = parseCurrency(changeInput.value);
+        if (given > 0) {
+          const baseTotal = Number(checkoutState.total || 0);
+          const diff = Number((given - baseTotal).toFixed(2));
+          // diff pode ser zero ou positivo (já validado por validateStep4)
+          changeRequested = { given: Number(given.toFixed(2)), change: diff };
+          pickupText += ` (Troco para ${given.toFixed(2)} = ${diff.toFixed(2)})`;
+        }
+      }
+
+      delivery.address = pickupText;
       delivery.cep = API_CONFIG.ORIGIN_ADDRESS.cep;
       delivery.retiradaWho = checkoutState.delivery.pickupWho;
       delivery.retiradaDate = checkoutState.delivery.pickupDate;
       delivery.retiradaTime = checkoutState.delivery.pickupTime;
       delivery.frete = 0;
       delivery.distanceKm = 0;
+      if (changeRequested) delivery.changeRequested = changeRequested;
     } else {
       const addr = checkoutState.delivery;
       delivery.address = `${addr.street}, ${addr.number}${addr.complement ? ' - ' + addr.complement : ''}, ${addr.neighborhood}, ${addr.city}/${addr.state}`;
@@ -1059,39 +1143,61 @@ async function finishOrder() {
     }
     
     // Preparar payment
-    const payment = {
-      method: checkoutState.payment.method,
-      installments: checkoutState.payment.installments
+     // Preparar payment
+    let payment = {
+      method: normalizeMethodForWorker(checkoutState.payment.method), // ex: 'credito'|'dinheiro'|'pix'
+      methodLabel: checkoutState.payment.method || '', // rótulo legível (para o vendedor)
+      installments: Number(checkoutState.payment.installments || 1),
+      changeFor: null // número (se informado)
     };
-    
-    if (checkoutState.payment.method === 'Dinheiro') {
-      payment.changeFor = document.getElementById('change-for')?.value || '';
+
+    // se for Dinheiro, preencher changeFor numérico (também manter como string para segurança)
+    if ((checkoutState.payment.method || '').toString().toLowerCase() === 'dinheiro') {
+      const changeInputEl = document.getElementById('change-for');
+      const given = changeInputEl ? parseCurrency(changeInputEl.value) : 0;
+      if (given > 0) {
+        payment.changeFor = Number(given.toFixed(2)); // número
+        payment.changeForRaw = changeInputEl.value;   // string original (opcional, para debug)
+        payment.changeRequested = {
+          given: Number(given.toFixed(2)),
+          change: Number((given - Number(checkoutState.total || 0)).toFixed(2))
+        };
+      } else {
+        // garantir que campo existe (envia vazio em vez de undefined)
+        payment.changeFor = '';
+        payment.changeForRaw = '';
+      }
+    } else {
+      // para outros métodos, garantir existência das chaves para consistência
+      payment.changeFor = '';
+      payment.changeForRaw = '';
     }
+
     
     // Calcular total final (com juros se crédito)
-    let finalTotal = checkoutState.total;
+    let finalTotal = Number(checkoutState.total || 0);
     if (checkoutState.payment.method === 'Credito' && checkoutState.payment.installments > 1) {
-      const fee = INSTALLMENT_FEES[checkoutState.payment.installments];
-      finalTotal = checkoutState.total * (1 + fee);
+      const fee = INSTALLMENT_FEES[checkoutState.payment.installments] || 0;
+      finalTotal = finalTotal * (1 + fee);
     }
     
     // Montar payload
     const payload = {
-      action: 'reserveOrder',
-      payload: {
-        customer: {
-          name: checkoutState.customer.name,
-          contact: checkoutState.customer.phone,
-          cpf: checkoutState.customer.cpf
-        },
-        items: items,
-        delivery: delivery,
-        payment: payment,
-        coupon: checkoutState.coupon.code,
-        subtotal: parseFloat(checkoutState.subtotal.toFixed(2)),
-        total: parseFloat(finalTotal.toFixed(2))
-      }
-    };
+  action: 'reserveOrder',
+  payload: {
+    customer: {
+      name: checkoutState.customer.name,
+      contact: checkoutState.customer.phone,
+    },
+    items: items,
+    delivery: Object.assign({}, delivery, { type: String(delivery.type || '').toLowerCase() }),
+    payment: payment, // já normalizado acima
+    coupon: checkoutState.coupon.code || '',
+    subtotal: parseFloat(checkoutState.subtotal.toFixed(2)),
+    total: parseFloat(finalTotal.toFixed(2))
+  }
+};
+
     
     console.log('📤 Enviando pedido:', payload);
     
@@ -1132,8 +1238,8 @@ async function finishOrder() {
     console.error('❌ Erro ao finalizar pedido:', error);
     
     hideLoading();
-    btnText.style.display = 'inline';
-    btnSpinner.style.display = 'none';
+    if (btnText) btnText.style.display = 'inline';
+    if (btnSpinner) btnSpinner.style.display = 'none';
     
     let errorMsg = 'Erro ao processar pedido: ' + error.message;
     
@@ -1173,24 +1279,24 @@ function showSuccessPopup(orderId) {
   // RETIRADA
   if (deliveryType === 'retirada') {
     if (paymentMethod === 'Dinheiro') {
-      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguardamos você às <strong>${dateTimeText}</strong>.`;
+      message = `Pedido <strong>${orderId}</strong> reservado com sucesso!<br><br>Aguardamos você às <strong>${dateTimeText}</strong>.`;
     } else if (paymentMethod === 'PIX') {
-      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguarde o contato do vendedor caso queira o PIX copia e cola, caso contrário copie a chave abaixo e envie o comprovante pelo WhatsApp do vendedor(a).<br><br>Retirada às <strong>${dateTimeText}</strong>.`;
+      message = `Pedido <strong>${orderId}</strong> reservado com sucesso!<br><br>Aguarde o contato do vendedor caso queira o PIX copia e cola, caso contrário copie a chave abaixo e envie o comprovante pelo WhatsApp do vendedor(a).<br><br>Retirada às <strong>${dateTimeText}</strong>.`;
       showPixButton = true;
     } else if (paymentMethod === 'Credito') {
-      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguarde o link para pagamento que o vendedor irá te enviar para prosseguir com a retirada, ou se preferir pague quando vir retirar.<br><br>Retirada às <strong>${dateTimeText}</strong>.`;
+      message = `Pedido <strong>${orderId}</strong> reservado com sucesso!<br><br>Aguarde o link para pagamento que o vendedor irá te enviar para prosseguir com a retirada, ou se preferir pague quando vir retirar.<br><br>Retirada às <strong>${dateTimeText}</strong>.`;
     }
   }
   // ENTREGA
   else {
     if (paymentMethod === 'Dinheiro') {
-      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Agora é só esperar a entrega! O prazo é de até <strong>2 dias</strong> para receber seu pedido.<br><br>Para mais informações clique no botão abaixo para entrar em contato com o vendedor(a):`;
+      message = `Pedido <strong>${orderId}</strong> reservado com sucesso!<br><br>Agora é só esperar a entrega! O prazo é de até <strong>2 dias</strong> para receber seu pedido.<br><br>Para mais informações clique no botão abaixo para entrar em contato com o vendedor(a):`;
       showWhatsAppButton = true;
     } else if (paymentMethod === 'PIX') {
-      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Agora é só esperar a entrega! A aprovação da entrega será realizada assim que o seu PIX for confirmado no nosso sistema, o prazo é de <strong>2 dias</strong>.<br><br>Se quiser adiantar, copie a chave PIX abaixo e envie o comprovante pelo WhatsApp do vendedor:`;
+      message = `Pedido <strong>${orderId}</strong> reservado com sucesso!<br><br>Agora é só esperar a entrega! A aprovação da entrega será realizada assim que o seu PIX for confirmado no nosso sistema, o prazo é de <strong>2 dias</strong>.<br><br>Se quiser adiantar, copie a chave PIX abaixo e envie o comprovante pelo WhatsApp do vendedor:`;
       showPixButton = true;
     } else if (paymentMethod === 'Credito') {
-      message = `Pedido <strong>PC-${orderId}</strong> reservado com sucesso!<br><br>Aguarde o contato do vendedor(a), você receberá o link de pagamento on-line, depois disso é só aguardar seu pedido.<br><br>O prazo de entrega é <strong>2 dias</strong> depois da aprovação do pagamento.`;
+      message = `Pedido <strong>${orderId}</strong> reservado com sucesso!<br><br>Aguarde o contato do vendedor(a), você receberá o link de pagamento on-line, depois disso é só aguardar seu pedido.<br><br>O prazo de entrega é <strong>2 dias</strong> depois da aprovação do pagamento.`;
     }
   }
   
@@ -1224,12 +1330,7 @@ function showSuccessPopup(orderId) {
   `;
   
   // SVG do ícone de check (círculo com check)
-  const checkIconSVG = `
-    <svg width="80" height="80" viewBox="0 0 80 80" style="margin-bottom: 20px;">
-      <circle cx="40" cy="40" r="38" fill="none" stroke="#000" stroke-width="4"/>
-      <path d="M25 40 L35 50 L55 30" fill="none" stroke="#4fd1c5" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  `;
+  const checkIconSVG = ` <img src="../image/verificado.gif" alt="Success" style="width: 80px; height: 80px; margin-bottom: 20px;" /> `;
   
   let buttonsHTML = '';
   
@@ -1337,22 +1438,39 @@ function copyPixKey() {
 /* ============================================
    CONSUMIR CUPOM
    ============================================ */
+// ---------- REPLACE: consumeCoupon (envia ação 'consumeCoupon' ao Worker e trata resposta) ----------
 async function consumeCoupon(code) {
+  if (!code) return;
   try {
     console.log('🔄 Consumindo cupom:', code);
-    
-    await fetch(API_CONFIG.WORKER_URL, {
+
+    const res = await fetch(API_CONFIG.WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-  action: 'consumeCoupon',
-  payload: { code }
-})
+        action: 'consumeCoupon',
+        payload: { code }
+      })
     });
-    
-    console.log('✅ Cupom consumido');
+
+    // tenta parsear JSON com segurança
+    let data;
+    try {
+      data = await res.json();
+    } catch (e) {
+      throw new Error('Resposta inválida do servidor ao consumir cupom');
+    }
+
+    if (!data || data.success === false) {
+      const reason = (data && (data.error || data.message)) ? (data.error || data.message) : 'Erro ao consumir cupom';
+      throw new Error(reason);
+    }
+
+    console.log('✅ Cupom consumido:', data);
+    return true;
   } catch (error) {
     console.warn('⚠️ Erro ao consumir cupom (não crítico):', error);
+    return false;
   }
 }
 
