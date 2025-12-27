@@ -349,12 +349,15 @@ function prepareStep(stepNumber) {
 
     updateTotals();
     renderReviewStep();
+    
   }
 
    if (stepNumber === 4) {
     // garante que total/frete/cupom estejam atualizados antes de gerar opções de parcelamento
+    calculateShipping();
     updateTotals();
     updateInstallmentOptions();
+    
   }
 }
 
