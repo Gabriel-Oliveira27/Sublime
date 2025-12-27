@@ -1521,3 +1521,9 @@ function showToast(message, type = 'info') {
   
   setTimeout(() => toast.remove(), 3000);
 }
+
+const input = document.getElementById("change-for");
+
+  input.addEventListener("input", () => {
+    input.value = input.value.replace(/\D/g, "");
+  });
