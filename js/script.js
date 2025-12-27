@@ -1,6 +1,6 @@
 
 const API_CONFIG = {
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbyLj62_6PDu1JAnqkVj9v7lwfyUJ7h_IyaT5eoyUyL4iHT9usGdgH2U9v3SQmDkhvByxA/exec',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbwHD93akrVoxp2XjjCqZlY7RCG3ydk4Wctv5ETOR80y0qrJv-6f0hw80T9JrLDXpgqa/exec',
   WORKER_URL: 'https://sublime.mcpemaster620.workers.dev/',
   WHATSAPP_NUMBER: '5588988568911'
 };
@@ -355,39 +355,41 @@ function addToCart(product) {
 }
 
 function removeFromCart(productId) {
-  appState.cart = appState.cart.filter(
-    item => String(item.id) !== String(productId)
-  );
+  // normaliza id como string para evitar mismatch number/string
+  const idStr = String(productId);
 
+  appState.cart = appState.cart.filter(item => String(item.id) !== idStr);
+
+  // salva e atualiza UI (saveCart chama updateCartUI)
   saveCart();
-  
-  updateCartBadge(); // ← IMPORTANTE
-  updateCartTotal(); // ← IMPORTANTE
 
   showToast('Produto removido do carrinho', 'success');
 }
 
 
 function updateQuantity(productId, delta) {
-  const item = appState.cart.find(item => item.id === productId);
-  
+  // normaliza id (aceita number ou string)
+  const idStr = String(productId);
+  const item = appState.cart.find(i => String(i.id) === idStr);
+
   if (!item) return;
-  
-  const newQuantity = item.quantity + delta;
-  
+
+  const newQuantity = item.quantity + Number(delta);
+
   if (newQuantity <= 0) {
     removeFromCart(productId);
     return;
   }
-  
+
   if (newQuantity > item.qtd) {
     showToast('Estoque insuficiente', 'error');
     return;
   }
-  
+
   item.quantity = newQuantity;
-  saveCart();
+  saveCart(); // já chama updateCartUI
 }
+
 
 function updateCartUI() {
   const cartBadge = document.getElementById('cart-badge');
