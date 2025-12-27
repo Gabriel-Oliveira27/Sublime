@@ -1353,7 +1353,7 @@ function showSuccessPopup(orderId) {
   }
   
   if (showWhatsAppButton) {
-    const whatsappMsg = encodeURIComponent(`Olá! Queria falar sobre o pedido PC-${orderId}`);
+    const whatsappMsg = encodeURIComponent(`Olá! Queria falar sobre o pedido ${orderId}`);
     const whatsappUrl = `https://wa.me/${API_CONFIG.WHATSAPP_NUMBER}?text=${whatsappMsg}`;
     buttonsHTML += `
       <a href="${whatsappUrl}" target="_blank" style="
